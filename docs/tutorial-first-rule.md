@@ -172,3 +172,95 @@ Two small edits:
 ## What I took from it
 
 That's the whole engineering loop, on a rule I wrote myself: write it, test it, find the hole, close it with a transformation, test again. The same idea scales all the way up to CRS. Its rules are just this, with smarter "where", "what" and many more transformations. My [autopsies](crs-rule-autopsies/) of five CRS rules use exactly these same five questions.
+
+## My second rule: two conditions, and a number instead of text
+
+My first rule looked at one thing. Real rules often need two things to be true at once, so for my second rule I wanted to learn a **chain**.
+
+The idea, in everyday terms: a customer at the counter asks for "apple juice". Someone who hands over a 300 word order slip isn't shopping. They're testing what the kitchen does with weird input. Attack tools do exactly that: they stuff long, strange text into search boxes to see what breaks. So rule **100090** blocks product searches longer than 100 characters, and only on the search page.
+
+Three new ideas in one rule:
+
+- **`chain`** links two `SecRule`s. Both have to be true: "it's the search page" AND "the search text is too long". Each condition alone is fine.
+- **`@gt 100`** is the operator "greater than 100".
+- **`t:length`** is a transformation that swaps the text for its length. `apple` becomes `5`. That's what lets `@gt` compare it with a number.
+
+This time I kept the comments short: one line per piece, in the same order as the rule below them, so the whole file fits on one screen.
+
+![My second rule in VS Code](screenshots/tutorial-09-second-rule-file.png)
+
+### Testing it
+
+```powershell
+$long = "a" * 120
+# Make a text of 120 letter a's. PowerShell can multiply text like that.
+curl.exe -s -o NUL -w "%{http_code}\n" "http://localhost:8080/rest/products/search?q=apple"
+# A normal search: expect 200
+curl.exe -s -o NUL -w "%{http_code}\n" "http://localhost:8080/rest/products/search?q=$long"
+# A 120 letter search: expect 403
+curl.exe -s -o NUL -w "%{http_code}\n" "http://localhost:8080/api/Products?q=$long"
+# The same long text on a different page: expect NOT 403, because the chain only covers the search page
+```
+
+![200, 403, 200](screenshots/tutorial-10-second-rule-tests.png)
+
+The logbook agrees: the long search is the only one blocked, by `100090`. The long text sent to `/api/Products` went through, because that page isn't the search page:
+
+![The audit log for my second rule](screenshots/tutorial-11-second-rule-audit.png)
+
+### Breaking it
+
+I took `t:length` out of the second condition, so it's just `t:none`. I even changed my comment to say what that does: compare the raw text directly.
+
+![The broken version: t:none only](screenshots/tutorial-12-second-rule-broken.png)
+
+The 120 letter search now gets a **200**. Without `t:length`, the guard compares the text "aaaa..." with the number 100. That makes no sense, so it never matches, and the rule silently does nothing. No error, no warning. Just a guard who stopped working.
+
+![The broken rule lets the long search in](screenshots/tutorial-13-second-rule-broken-result.png)
+
+### Fixing it
+
+`t:length` back in, `docker compose restart waf`, and the long search is a **403** again.
+
+![The fixed rule](screenshots/tutorial-14-second-rule-fixed.png)
+
+![403 again](screenshots/tutorial-15-second-rule-fixed-result.png)
+
+The lesson I took from this one: a broken rule doesn't always crash. Sometimes it just quietly stops matching. That's exactly why the next step matters.
+
+## Turning both rules into tests, and my first commit
+
+Testing by hand proves a rule works today. Tests prove it keeps working. I wrote six scenarios in `scenarios/controls/my-rules.yaml`, three per rule: the attack gets blocked, the normal request gets through, and one edge case (the lowercase trick for 100080, a long search on a different page for 100090). Each one looks like this:
+
+```yaml
+id: MY-004                                                   # the test's name tag
+name: a product search longer than 100 characters is blocked # what it checks, in words
+request: {method: GET, path: /rest/products/search, params: {q: "aaaa...120 a's..."}}   # what to send
+expected: {decision: blocked, status: 403, intercepted_by: 100090}                       # what MUST happen
+```
+
+Then the whole suite:
+
+```powershell
+docker compose --profile test run --rm --build tests
+# Run every test. --build makes the test container pick up my new YAML file.
+```
+
+70 passed: the original 62, my six scenarios, and two config checks that run once for every rule file (one each for my two files).
+
+![70 passed](screenshots/tutorial-16-70-passed.png)
+
+Then my first commit to the project:
+
+```powershell
+git add modsecurity/custom-rules/180-my-rule.conf modsecurity/custom-rules/190-my-second-rule.conf scenarios/controls/my-rules.yaml
+# Choose exactly which files go into this commit: my two rules and their tests
+git commit -m "My rules 100080 and 100090, with tests"
+# Save a snapshot with a message saying what changed
+git push
+# Send it to GitHub
+```
+
+![My commit on GitHub](screenshots/tutorial-17-my-commit-on-github.png)
+
+GitHub Actions then rebuilt the whole lab with the real Juice Shop and ran every test against my rules. Green tick.

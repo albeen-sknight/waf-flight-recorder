@@ -231,7 +231,7 @@ Imagine a bouncer whose list says "no entry for JOHN". Someone walks up with an 
 | `t:normalizePath` | Clean up messy paths | `/./ftp` becomes `/ftp` |
 | `t:length` | Replace the text with how long it is | `apple` becomes `5` |
 
-I learned this one the hard way, on my own rule. Full walkthrough with my screenshots: [**my first rule, step by step**](docs/tutorial-first-rule.md).
+I learned this one the hard way, on my own rule. Full walkthrough with my screenshots, including a second rule and my first commit: [**my first rules, step by step**](docs/tutorial-first-rule.md).
 
 ![My own rule in VS Code](docs/screenshots/tutorial-07-rule-fixed.png)
 
@@ -249,6 +249,7 @@ Each one teaches one decision:
 | 100060 | Two conditions together: `DELETE` *and* the feedback page | Each condition alone is fine. Only the combination is suspicious. That's a **chain** |
 | 100070 / 100071 | Adds penalty points, once in phase 2, once in phase 1 | The phase 1 version does nothing at all (see Phase 5) |
 | 100080 | My own scanner marker, in any case | My first rule written from zero on my laptop: [the tutorial](docs/tutorial-first-rule.md) |
+| 100090 | Blocks product searches longer than 100 characters, only on the search page | A chain of two conditions, and `t:length` to turn text into a number. Without it, the rule silently does nothing: [the tutorial](docs/tutorial-first-rule.md#my-second-rule-two-conditions-and-a-number-instead-of-text) |
 
 Why block `/ftp`? With the guard in DetectionOnly, this is what Juice Shop shows to anyone who asks:
 
@@ -292,6 +293,10 @@ docker compose --profile test run --rm tests
 And on my laptop, against the real Juice Shop in Docker. 62 passed, including the check that Juice Shop can't be reached any way except through the WAF:
 
 ![62 passed on my laptop](docs/screenshots/22-laptop-62-passed.png)
+
+After I added my own two rules and six tests of my own: 70 passed.
+
+![70 passed after my own rules](docs/screenshots/tutorial-16-70-passed.png)
 
 On top of that, **GitHub Actions** (a robot that runs on GitHub's computers) rebuilds the whole lab from scratch and reruns every drill each time I push a change. That's the green tick at the top of this page.
 
