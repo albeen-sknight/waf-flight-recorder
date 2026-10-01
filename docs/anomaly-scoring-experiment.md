@@ -63,9 +63,23 @@ FP-001 scored 5 too. "Just raise it to 10" would've fixed my false positive and 
 
 ## Reproduce it
 
+On Windows with Docker:
+
+```powershell
+docker compose --profile test run --rm tests python tools/run_scenario.py SCORE-001 SCORE-002 SCORE-003 SCORE-004
+# Run just the four scoring scenarios and print what the WAF decided for each
+$env:WFR_INBOUND_THRESHOLD="10"; docker compose up -d
+# Set the penalty point limit to 10 for this PowerShell window and restart the lab with it
+docker compose --profile test run --rm tests
+# Run every scenario: every FAIL is an attack that now gets through
+Remove-Item Env:WFR_INBOUND_THRESHOLD; docker compose up -d
+# Remove the setting and restart: back to 5
+```
+
+On Linux without Docker (the native lab):
+
 ```bash
-python3 tools/run_scenario.py SCORE-001 SCORE-002 SCORE-003 SCORE-004
-WFR_INBOUND_THRESHOLD=10 tools/native-lab.sh restart
-python3 tools/run_scenario.py          # every FAIL is an attack that now gets through
-tools/native-lab.sh restart            # back to 5
+WFR_INBOUND_THRESHOLD=10 tools/native-lab.sh restart   # restart the native WAF with the limit at 10
+python3 tools/run_scenario.py                          # every FAIL is an attack that now gets through
+tools/native-lab.sh restart                            # restart with the default: back to 5
 ```

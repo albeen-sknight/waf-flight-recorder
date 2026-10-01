@@ -34,7 +34,7 @@ Every rule I write answers the same five questions: **where do I look, what am I
 From PowerShell, inside the project folder:
 
 ```powershell
-code .
+code .   # open the current folder in VS Code (the . means "this folder")
 ```
 
 If that doesn't work: VS Code → File → Open Folder → `Documents\waf-flight-recorder`.
@@ -89,14 +89,14 @@ Two things that tripped me up:
 The WAF only reads its rule files when it starts. So after every edit:
 
 ```powershell
-docker compose restart waf
-docker compose ps
+docker compose restart waf   # restart only the WAF container so it rereads its rule files
+docker compose ps            # list the containers and their status
 ```
 
 I wait until the `waf` line says `healthy`. If it never gets there, I made a typo, and this tells me where:
 
 ```powershell
-docker compose logs waf --tail 20
+docker compose logs waf --tail 20   # show the last 20 lines the WAF printed, errors included
 ```
 
 ![Restarting the WAF to load my rule](screenshots/tutorial-02-restart.png)
@@ -109,6 +109,8 @@ I pretend to be my own scanner. `-A` sets the User-Agent, so it's basically a fa
 
 ```powershell
 curl.exe -i -A "Albeen-Scanner/1.0" http://localhost:8080/
+# curl.exe sends a request from the command line, like a browser without the window.
+# -i shows the response headers too. -A sets the User-Agent: the name on the ID card.
 ```
 
 `403 Forbidden` and **WFR-BLOCKED**. Then a normal visitor:
@@ -118,6 +120,7 @@ curl.exe -i -A "Albeen-Scanner/1.0" http://localhost:8080/
 
 ```powershell
 curl.exe -s -o NUL -w "%{http_code}\n" http://localhost:8080/
+# -s = quiet, -o NUL = throw the page away, -w = print only the status code
 ```
 
 `200`. They get in.
@@ -130,6 +133,8 @@ curl.exe -s -o NUL -w "%{http_code}\n" http://localhost:8080/
 
 ```powershell
 docker compose --profile test run --rm tests python tools/summarize_audit.py -n 5
+# Run my log summary script inside the tests container: one line per request,
+# for the last 5 requests. --rm deletes the container again when it's done.
 ```
 
 My request shows up as `BLOCK` with `rules=100080`. That's the proof the rule fired, and not something else.
@@ -144,6 +149,7 @@ Same scanner name, lowercase:
 
 ```powershell
 curl.exe -s -o NUL -w "%{http_code}\n" -A "albeen-scanner/1.0" http://localhost:8080/
+# Same fake ID card, but written in lowercase
 ```
 
 `200`. It walked straight in. `@contains` cares about upper and lowercase, and `t:none` means nothing tidies the input first. An attacker only has to change one letter.
