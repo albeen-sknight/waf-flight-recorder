@@ -1,7 +1,6 @@
-# ModSecurity notes — the local rules line by line
+# ModSecurity notes: my rules, line by line
 
-Every local rule, with the five decisions that define it. Files are in
-`modsecurity/custom-rules/`; each file's header explains the choice.
+Each rule boils down to five choices: phase, target, operator, transformations, action. Here they all are in one table. The files live in `modsecurity/custom-rules/`, and each file's header says why I picked what I picked.
 
 | ID | Lab | Phase | Target | Operator | Transformations | Action | Scenarios |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -15,28 +14,16 @@ Every local rule, with the five decisions that define it. Files are in
 | 100071 | H score, phase 1 | 1 | `ARGS:wfr_score` | `@streq phase1` | none | pass, `setvar` +5 | SCORE-002 |
 | 100070 | H score, phase 2 | 2 | `ARGS:wfr_score` | `@streq phase2` | none | pass, `setvar` +critical | SCORE-003 |
 
-Exclusions (`modsecurity/exclusions/`): **1000** health route off, **1010** FP-001.
+Exclusions (`modsecurity/exclusions/`): **1000** switches ModSecurity off for the health route, **1010** is the FP-001 fix.
 
-## Findings while building
+## Things I learned the hard way
 
-1. **Some directives are server-only.** `SecPcreMatchLimit` and friends are
-   refused inside `<VirtualHost>`; ModSecurity is included in server context.
-2. **JSON argument names are paths, not `json.` prefixed** (ModSecurity 2.9.7):
-   `{"comment": …}` → `ARGS:comment`, `{"a":{"b":…}}` → `ARGS:a.b`,
-   `{"list":[…]}` → `ARGS:list.list`. ARG-003/ARG-005 lock this in.
-3. **`@within` is a substring test.** `@within PROPFIND PROPPATCH` would match
-   `PATCH`. Anchored `@rx` for exact sets (100010). CRS 911100 has the same property.
-4. **Apache normalises before ModSecurity sees the path.** `//ftp/` arrives as
-   `/ftp/` (MergeSlashes), so even the `t:none` rule catches it; `/FTP/` and
-   `/fTp/legal.md` are only caught by the `t:lowercase` rule (RTE-002/004).
-5. **Phase decides whether a rule has any effect.** The phase-1 scoring rule is
-   wiped by CRS initialisation (901200); the same rule in phase 2 blocks.
-6. **CRS rules use `block`, not `deny`.** In anomaly mode `block` resolves to
-   the default action (`pass`); only 949110 denies.
-7. **DetectionOnly changes the wording.** 949110's line becomes `Warning. …`
-   instead of `Access denied …`, and `audit_data.action` disappears.
-8. **`ctl:` in a chained rule works.** Exclusion 1010 puts
-   `ctl:ruleRemoveTargetById` on the second link, so it fires only when both
-   method and route match.
-9. **CRS 980170 reports scores only when there is a score.** A clean request
-   has no 980170 line; the harness treats a missing score as 0.
+1. **Some directives only work at server level.** Put `SecPcreMatchLimit` inside `<VirtualHost>` and Apache refuses to start. So ModSecurity gets included in server context.
+2. **JSON argument names are paths. No `json.` prefix** (ModSecurity 2.9.7). `{"comment": …}` becomes `ARGS:comment`. `{"a":{"b":…}}` becomes `ARGS:a.b`. `{"list":[…]}` becomes `ARGS:list.list`. I'd guessed wrong at first. ARG-003 and ARG-005 now lock the real behaviour in.
+3. **`@within` is a substring test.** `@within PROPFIND PROPPATCH` matches `PATCH`. Ouch. For an exact set, use an anchored `@rx` (that's what 100010 does). CRS 911100 has the exact same quirk.
+4. **Apache cleans up the path before ModSecurity sees it.** `//ftp/` arrives as `/ftp/` thanks to MergeSlashes, so even the `t:none` rule catches it. `/FTP/` and `/fTp/legal.md`? Only the `t:lowercase` rule gets those (RTE-002/004).
+5. **Phase decides whether a rule does anything at all.** The phase-1 scoring rule gets wiped by CRS initialisation (901200). Move the same rule to phase 2 and it blocks.
+6. **CRS rules say `block`, not `deny`.** In anomaly mode `block` falls back to the default action, which is `pass`. Only 949110 actually denies.
+7. **DetectionOnly changes the log wording.** 949110's line turns into `Warning. …` instead of `Access denied …`, and `audit_data.action` vanishes.
+8. **`ctl:` works on a chained rule.** Exclusion 1010 puts `ctl:ruleRemoveTargetById` on the second link, so it only fires when both the method and the route match.
+9. **CRS 980170 only reports a score when there is one.** Clean request, no 980170 line. The harness reads a missing score as 0.

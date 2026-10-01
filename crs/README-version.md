@@ -3,17 +3,15 @@
 | | |
 | --- | --- |
 | Pinned tag | **v4.29.0** |
-| Where it is pinned | `waf/Dockerfile` (`ARG CRS_VERSION`), `tools/native-lab.sh` (install comment), `modsecurity/crs-setup.conf` (`tx.crs_setup_version=4290`) |
+| Pinned in | `waf/Dockerfile` (`ARG CRS_VERSION`), `tools/native-lab.sh` (install comment), `modsecurity/crs-setup.conf` (`tx.crs_setup_version=4290`) |
 | Source | https://github.com/coreruleset/coreruleset |
 | Installed at | `/opt/crs` (container and build workspace) |
 
-CRS is **not** vendored into this repository and is never edited. Local
-behaviour changes live in `modsecurity/crs-setup.conf` and
-`modsecurity/exclusions/`.
+CRS isn't copied into this repo, and nobody edits it. Ever. Anything that changes its behaviour lives in `modsecurity/crs-setup.conf` or `modsecurity/exclusions/`.
 
-## Bumping CRS
+## Bumping it
 
 1. Change `CRS_VERSION` in `waf/Dockerfile` and `tx.crs_setup_version` in `crs-setup.conf`.
-2. Diff `crs-setup.conf.example` between the two tags for new settings.
+2. Diff `crs-setup.conf.example` between the old and new tags. New settings show up there.
 3. `docker compose up -d --build && docker compose --profile test run --rm tests`
-4. Any scenario whose matched rule IDs changed is a finding: record it in `docs/tuning-journal/`.
+4. A scenario whose matched rule IDs changed? That's a finding. Log it in `docs/tuning-journal/`.
