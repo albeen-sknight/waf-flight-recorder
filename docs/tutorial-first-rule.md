@@ -6,7 +6,7 @@ When I started, a line like this meant nothing to me:
 SecRule REQUEST_HEADERS:User-Agent "@contains Albeen-Scanner" "id:100080,phase:1,deny,status:403,log,t:none,msg:'My rule'"
 ```
 
-Now it reads like a sentence. This is how I got there, step by step, on my own laptop (Windows, Docker Desktop, PowerShell, VS Code).
+Now it reads like a sentence. This is how I got there, step by step, on my own laptop (Windows, Docker Desktop, PowerShell, VS Code). Every screenshot below is from my own run on October 1, 2026.
 
 ## What a rule actually is
 
@@ -82,6 +82,8 @@ Two things that tripped me up:
 - The `\` at the end of a line means "this instruction carries on in the next line". Forget one and the WAF won't start.
 - You **can't** put a `#` comment between those lines. It breaks the rule. All the explaining goes above it.
 
+![My rule file in VS Code](screenshots/tutorial-01-rule-file.png)
+
 ## Step 3: Load the rule
 
 The WAF only reads its rule files when it starts. So after every edit:
@@ -97,6 +99,10 @@ I wait until the `waf` line says `healthy`. If it never gets there, I made a typ
 docker compose logs waf --tail 20
 ```
 
+![Restarting the WAF to load my rule](screenshots/tutorial-02-restart.png)
+
+Right after a restart it says `health: starting`. A few seconds later it's `healthy`.
+
 ## Step 4: Test it
 
 I pretend to be my own scanner. `-A` sets the User-Agent, so it's basically a fake ID card:
@@ -107,11 +113,16 @@ curl.exe -i -A "Albeen-Scanner/1.0" http://localhost:8080/
 
 `403 Forbidden` and **WFR-BLOCKED**. Then a normal visitor:
 
+![My scanner marker blocked](screenshots/tutorial-03-scanner-blocked.png)
+
+
 ```powershell
 curl.exe -s -o NUL -w "%{http_code}\n" http://localhost:8080/
 ```
 
 `200`. They get in.
+
+![A normal visitor gets in](screenshots/tutorial-04-normal-allowed.png)
 
 (In PowerShell it has to be `curl.exe`. Plain `curl` there is a different command.)
 
@@ -123,6 +134,10 @@ docker compose --profile test run --rm tests python tools/summarize_audit.py -n 
 
 My request shows up as `BLOCK` with `rules=100080`. That's the proof the rule fired, and not something else.
 
+![The audit log: my request blocked by 100080](screenshots/tutorial-05-audit-log.png)
+
+The line above it is the normal visitor, allowed with no rules matched. Further up, my `/ftp` visit, blocked by 100040 and 100020.
+
 ## Step 6: Break it
 
 Same scanner name, lowercase:
@@ -133,6 +148,8 @@ curl.exe -s -o NUL -w "%{http_code}\n" -A "albeen-scanner/1.0" http://localhost:
 
 `200`. It walked straight in. `@contains` cares about upper and lowercase, and `t:none` means nothing tidies the input first. An attacker only has to change one letter.
 
+![Lowercase gets straight past my rule](screenshots/tutorial-06-lowercase-gets-in.png)
+
 ## Step 7: Fix it
 
 Two small edits:
@@ -141,6 +158,10 @@ Two small edits:
 - `@contains Albeen-Scanner` becomes `@contains albeen-scanner`. Compare against lowercase text.
 
 `docker compose restart waf`, then both curl commands from Steps 4 and 6 again. Both 403 now.
+
+![My fixed rule, with t:lowercase](screenshots/tutorial-07-rule-fixed.png)
+
+![The lowercase trick blocked now](screenshots/tutorial-08-lowercase-blocked.png)
 
 ## What I took from it
 
