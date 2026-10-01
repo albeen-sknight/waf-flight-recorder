@@ -1,0 +1,66 @@
+{
+  "transaction": {
+    "time": "01/Oct/2026:10:54:26.758033 +0200",
+    "transaction_id": "ar4fwldKj6OGqet0DMXGgQAAABE",
+    "remote_address": "192.0.2.10",
+    "remote_port": 43816,
+    "local_address": "127.0.0.1",
+    "local_port": 8080
+  },
+  "request": {
+    "request_line": "POST /rest/user/login HTTP/1.1",
+    "headers": {
+      "User-Agent": "Mozilla/5.0 (WFR lab test runner)",
+      "Accept-Encoding": "gzip, deflate",
+      "Accept": "*/*",
+      "Connection": "keep-alive",
+      "Host": "localhost",
+      "X-WFR-Scenario": "CRS-SQLI-003",
+      "X-WFR-Run": "04d9a9d2dd1e",
+      "Content-Length": "40",
+      "Content-Type": "application/json"
+    },
+    "body": [
+      "{\"email\": \"' OR 1=1--\", \"password\": \"x\"}"
+    ]
+  },
+  "response": {
+    "protocol": "HTTP/1.1",
+    "status": 201,
+    "headers": {
+      "X-WFR-Transaction": "ar4fwldKj6OGqet0DMXGgQAAABE",
+      "Content-Type": "application/json",
+      "Content-Length": "150",
+      "Keep-Alive": "timeout=5, max=100",
+      "Connection": "Keep-Alive"
+    }
+  },
+  "audit_data": {
+    "messages": [
+      "Warning. detected SQLi using libinjection with fingerprint 's&1c' [file \"/opt/crs/rules/REQUEST-942-APPLICATION-ATTACK-SQLI.conf\"] [line \"66\"] [id \"942100\"] [msg \"SQL Injection Attack Detected via libinjection\"] [data \"Matched Data: s&1c found within ARGS:email: ' OR 1=1--\"] [severity \"CRITICAL\"] [ver \"OWASP_CRS/4.29.0\"] [tag \"application-multi\"] [tag \"language-multi\"] [tag \"platform-multi\"] [tag \"attack-sqli\"] [tag \"paranoia-level/1\"] [tag \"OWASP_CRS\"] [tag \"OWASP_CRS/ATTACK-SQLI\"] [tag \"capec/1000/152/248/66\"]",
+      "Warning. Unconditional match in SecAction. [file \"/opt/crs/rules/RESPONSE-980-CORRELATION.conf\"] [line \"99\"] [id \"980170\"] [msg \"Anomaly Scores: (Inbound Scores: blocking=5, detection=5, per_pl=5-0-0-0, threshold=10) - (Outbound Scores: blocking=0, detection=0, per_pl=0-0-0-0, threshold=4) - (SQLI=5, XSS=0, RFI=0, LFI=0, RCE=0, PHPI=0, HTTP=0, SESS=0, COMBINED_SCORE=5)\"] [ver \"OWASP_CRS/4.29.0\"] [tag \"reporting\"] [tag \"OWASP_CRS\"]"
+    ],
+    "error_messages": [
+      "[file \"apache2_util.c\"] [line 275] [level 3] [client 127.0.0.1] ModSecurity: Warning. detected SQLi using libinjection with fingerprint 's&1c' [file \"/opt/crs/rules/REQUEST-942-APPLICATION-ATTACK-SQLI.conf\"] [line \"66\"] [id \"942100\"] [msg \"SQL Injection Attack Detected via libinjection\"] [data \"Matched Data: s&1c found within ARGS:email: ' OR 1=1--\"] [severity \"CRITICAL\"] [ver \"OWASP_CRS/4.29.0\"] [tag \"application-multi\"] [tag \"language-multi\"] [tag \"platform-multi\"] [tag \"attack-sqli\"] [tag \"paranoia-level/1\"] [tag \"OWASP_CRS\"] [tag \"OWASP_CRS/ATTACK-SQLI\"] [tag \"capec/1000/152/248/66\"] [hostname \"localhost\"] [uri \"/rest/user/login\"] [unique_id \"ar4fwldKj6OGqet0DMXGgQAAABE\"]",
+      "[file \"apache2_util.c\"] [line 275] [level 3] [client 127.0.0.1] ModSecurity: Warning. Unconditional match in SecAction. [file \"/opt/crs/rules/RESPONSE-980-CORRELATION.conf\"] [line \"99\"] [id \"980170\"] [msg \"Anomaly Scores: (Inbound Scores: blocking=5, detection=5, per_pl=5-0-0-0, threshold=10) - (Outbound Scores: blocking=0, detection=0, per_pl=0-0-0-0, threshold=4) - (SQLI=5, XSS=0, RFI=0, LFI=0, RCE=0, PHPI=0, HTTP=0, SESS=0, COMBINED_SCORE=5)\"] [ver \"OWASP_CRS/4.29.0\"] [tag \"reporting\"] [tag \"OWASP_CRS\"] [hostname \"localhost\"] [uri \"/rest/user/login\"] [unique_id \"ar4fwldKj6OGqet0DMXGgQAAABE\"]"
+    ],
+    "handler": "proxy-server",
+    "stopwatch": {
+      "p1": 835,
+      "p2": 1234,
+      "p3": 79,
+      "p4": 193,
+      "p5": 127,
+      "sr": 0,
+      "sw": 0,
+      "l": 0,
+      "gc": 0
+    },
+    "producer": [
+      "ModSecurity for Apache/2.9.7 (http://www.modsecurity.org/)",
+      "OWASP_CRS/4.29.0"
+    ],
+    "server": "Apache/2.4.58 (Ubuntu)",
+    "engine_mode": "ENABLED"
+  }
+}
