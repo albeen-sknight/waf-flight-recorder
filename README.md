@@ -72,6 +72,10 @@ I started with nothing but plumbing. Browser to WAF to Juice Shop, one command t
 docker compose up -d --build
 ```
 
+On my own laptop (Windows, Docker Desktop), both containers up and the WAF healthy. Juice Shop shows no host port, only `3000/tcp` inside Docker. The WAF is bound to `127.0.0.1:8080`:
+
+![docker compose ps on my laptop](docs/screenshots/21-laptop-compose-ps-healthy.png)
+
 The first thing I hit: ModSecurity refuses some engine directives inside an Apache `<VirtualHost>`. So the whole ModSecurity config loads at server level, from one file, [`modsecurity/main.conf`](modsecurity/main.conf), which fixes the load order. That file is the first thing I'd tell anyone to read.
 
 ### Phase 1: learning to read the audit log
@@ -122,6 +126,10 @@ pytest runs all of it, plus config checks (unique rule IDs, ID ranges, include o
 
 ![The whole suite](docs/screenshots/19-pytest.png)
 
+And the same suite on my laptop against the real Juice Shop in Docker. 62 passed, including the isolation test that only runs inside Docker:
+
+![62 passed on my laptop](docs/screenshots/22-laptop-62-passed.png)
+
 ![One line per transaction](docs/screenshots/18-audit-summary.png)
 
 ### Phase 4: CRS, and taking its rules apart
@@ -135,6 +143,10 @@ The famous Juice Shop admin login bypass, `' OR 1=1--` as the email, doesn't log
 ![Login bypass attempt](docs/screenshots/04-login-sqli-bypass-blocked.png)
 
 ![The same string straight against the API](docs/screenshots/03-sqli-search-blocked.png)
+
+Same thing from my own browser, the first time I ran the lab on my laptop:
+
+![SQL injection blocked in my browser](docs/screenshots/20-laptop-sqli-blocked-in-browser.png)
 
 ![CRS controls](docs/screenshots/13-crs-controls.png)
 
