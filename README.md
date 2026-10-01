@@ -58,6 +58,33 @@ It's a defensive learning lab. It doesn't protect anything real, and all the att
 
 More detail: [architecture](docs/architecture.md).
 
+## How a WAF rule works, in plain words
+
+This is the mental model that made everything else click for me.
+
+Think of the WAF as a **bouncer at a club door**. Every request is a person trying to get in. A **rule** is one instruction on the bouncer's card: "Look at **the name on their ID card**. If it **contains "Albeen-Scanner"**, check it **at the door**, and **refuse entry**."
+
+In ModSecurity's language:
+
+```
+SecRule REQUEST_HEADERS:User-Agent "@contains Albeen-Scanner" "id:100080,phase:1,deny,status:403,log,t:none,msg:'My rule'"
+```
+
+| Piece | Bouncer version | What it means |
+| --- | --- | --- |
+| `SecRule` | "Here's an instruction" | Every rule starts with this |
+| `REQUEST_HEADERS:User-Agent` | **Where** to look: the ID card | The header where every browser or tool says its name |
+| `@contains Albeen-Scanner` | **What** to look for | Match if that text appears anywhere in it |
+| `id:100080` | The instruction's number | Unique. Mine go from 100000 to 100999 |
+| `phase:1` | **When**: at the door | As soon as the headers arrive, before the body is read |
+| `deny,status:403` | **What to do**: refuse entry | Block it and answer with a 403 |
+| `t:none` | Clean the input first? No | Transformations tidy the input (lowercasing, decoding) before the check |
+| `log,msg:'...'` | Write it in the logbook | Record it in the audit log with this message |
+
+Every rule, mine or CRS's, answers the same five questions: where do I look, what am I looking for, when, do I clean the input first, and what do I do about it.
+
+The full walkthrough, from creating the file to breaking it with one lowercase letter and fixing it: [**my first rule, step by step**](docs/tutorial-first-rule.md).
+
 ## How I built it, phase by phase
 
 ### Phase 0: the traffic path

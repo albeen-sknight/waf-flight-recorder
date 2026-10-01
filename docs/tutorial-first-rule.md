@@ -1,0 +1,147 @@
+# How I write a WAF rule: the tutorial I wish I'd had
+
+When I started, a line like this meant nothing to me:
+
+```
+SecRule REQUEST_HEADERS:User-Agent "@contains Albeen-Scanner" "id:100080,phase:1,deny,status:403,log,t:none,msg:'My rule'"
+```
+
+Now it reads like a sentence. This is how I got there, step by step, on my own laptop (Windows, Docker Desktop, PowerShell, VS Code).
+
+## What a rule actually is
+
+Think of the WAF as a **bouncer at a club door**. Every request is a person trying to get in. A **rule** is one instruction written on the bouncer's card:
+
+> "Look at **the name on their ID card**. If it **contains "Albeen-Scanner"**, check it **at the door, before they walk in**, and **refuse entry**."
+
+That's exactly what the line above says, in ModSecurity's language:
+
+| Piece | Bouncer version | What it means |
+| --- | --- | --- |
+| `SecRule` | "Here's an instruction" | Every rule starts with this |
+| `REQUEST_HEADERS:User-Agent` | **Where** to look: the ID card | The `User-Agent` header, where every browser or tool says its name |
+| `@contains Albeen-Scanner` | **What** to look for | Match if that text appears anywhere in it |
+| `id:100080` | The instruction's number | Every rule needs a unique number. Mine go from 100000 to 100999 |
+| `phase:1` | **When**: at the door | Phase 1 runs as soon as the headers arrive, before the request body is read |
+| `deny,status:403` | **What to do**: refuse entry | Block the request and answer with a 403 |
+| `t:none` | Clean the input first? No | Transformations tidy the input before checking it, lowercasing for example. `none` means check it exactly as it arrived |
+| `log,msg:'...'` | Write it in the logbook | Record it in the audit log with this message |
+
+Every rule I write answers the same five questions: **where do I look, what am I looking for, when, do I clean the input first, and what do I do about it.**
+
+## Step 1: Open the project in VS Code
+
+From PowerShell, inside the project folder:
+
+```powershell
+code .
+```
+
+If that doesn't work: VS Code → File → Open Folder → `Documents\waf-flight-recorder`.
+
+## Step 2: Create the rule file
+
+In VS Code's file list, `modsecurity` → `custom-rules`, right click → **New File** → `180-my-rule.conf`. This is what I put in it:
+
+```
+# =============================================================================
+# My first rule (100080): block a scanner marker I picked myself
+# =============================================================================
+# ModSecurity can't have comments in the middle of a rule (the \ at the end
+# of each line glues the lines into one instruction), so every part is
+# explained up here instead:
+#
+#   SecRule                     "Here's an instruction." Every rule starts with it.
+#   REQUEST_HEADERS:User-Agent  WHERE to look: the User-Agent header, where every
+#                               browser or tool says its name.
+#   "@contains Albeen-Scanner"  WHAT to look for: match if this text appears
+#                               anywhere in the header. Upper and lowercase matter.
+#   id:100080                   The rule's unique number. Mine go 100000 to 100999.
+#   phase:1                     WHEN: at the door. Headers are ready before the
+#                               request body is even read.
+#   deny                        WHAT TO DO: stop the request here.
+#   status:403                  ...and answer with "403 Forbidden".
+#   log                         Write it to the audit log (my flight recorder).
+#   t:none                      Don't clean the input first. Check it exactly as
+#                               it arrived.
+#   msg:'...'                   The message that shows up in the audit log.
+#
+# Scenarios: MY-001 (blocked), MY-002 (allowed)
+SecRule REQUEST_HEADERS:User-Agent "@contains Albeen-Scanner" \
+    "id:100080,\
+    phase:1,\
+    deny,\
+    status:403,\
+    log,\
+    t:none,\
+    msg:'My rule: Albeen-Scanner marker in User-Agent'"
+```
+
+Two things that tripped me up:
+
+- The `\` at the end of a line means "this instruction carries on in the next line". Forget one and the WAF won't start.
+- You **can't** put a `#` comment between those lines. It breaks the rule. All the explaining goes above it.
+
+## Step 3: Load the rule
+
+The WAF only reads its rule files when it starts. So after every edit:
+
+```powershell
+docker compose restart waf
+docker compose ps
+```
+
+I wait until the `waf` line says `healthy`. If it never gets there, I made a typo, and this tells me where:
+
+```powershell
+docker compose logs waf --tail 20
+```
+
+## Step 4: Test it
+
+I pretend to be my own scanner. `-A` sets the User-Agent, so it's basically a fake ID card:
+
+```powershell
+curl.exe -i -A "Albeen-Scanner/1.0" http://localhost:8080/
+```
+
+`403 Forbidden` and **WFR-BLOCKED**. Then a normal visitor:
+
+```powershell
+curl.exe -s -o NUL -w "%{http_code}\n" http://localhost:8080/
+```
+
+`200`. They get in.
+
+(In PowerShell it has to be `curl.exe`. Plain `curl` there is a different command.)
+
+## Step 5: Read the logbook
+
+```powershell
+docker compose --profile test run --rm tests python tools/summarize_audit.py -n 5
+```
+
+My request shows up as `BLOCK` with `rules=100080`. That's the proof the rule fired, and not something else.
+
+## Step 6: Break it
+
+Same scanner name, lowercase:
+
+```powershell
+curl.exe -s -o NUL -w "%{http_code}\n" -A "albeen-scanner/1.0" http://localhost:8080/
+```
+
+`200`. It walked straight in. `@contains` cares about upper and lowercase, and `t:none` means nothing tidies the input first. An attacker only has to change one letter.
+
+## Step 7: Fix it
+
+Two small edits:
+
+- `t:none,` becomes `t:none,t:lowercase,`. Lowercase the input before checking.
+- `@contains Albeen-Scanner` becomes `@contains albeen-scanner`. Compare against lowercase text.
+
+`docker compose restart waf`, then both curl commands from Steps 4 and 6 again. Both 403 now.
+
+## What I took from it
+
+That's the whole engineering loop, on a rule I wrote myself: write it, test it, find the hole, close it with a transformation, test again. The same idea scales all the way up to CRS. Its rules are just this, with smarter "where", "what" and many more transformations. My [autopsies](crs-rule-autopsies/) of five CRS rules use exactly these same five questions.
