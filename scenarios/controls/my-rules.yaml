@@ -1,0 +1,40 @@
+# My rules 100080 and 100090: each test is one request and what MUST happen to it.
+# "---" separates one test from the next.
+
+# Rule 100080: my scanner marker in the User-Agent, in any case
+id: MY-001
+name: my scanner marker is blocked
+kind: control
+request: {method: GET, path: /, headers: {User-Agent: "Albeen-Scanner/1.0"}}
+expected: {decision: blocked, status: 403, intercepted_by: 100080}
+---
+id: MY-002
+name: a normal browser is allowed
+kind: normal
+request: {method: GET, path: /}
+expected: {decision: allowed, not_rule_ids: [100080]}
+---
+id: MY-003
+name: the lowercase trick is blocked too (t:lowercase)
+kind: control
+request: {method: GET, path: /, headers: {User-Agent: "albeen-scanner/1.0"}}
+expected: {decision: blocked, status: 403, intercepted_by: 100080}
+---
+# Rule 100090: product searches longer than 100 characters (this q is 120)
+id: MY-004
+name: a product search longer than 100 characters is blocked
+kind: control
+request: {method: GET, path: /rest/products/search, params: {q: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}}
+expected: {decision: blocked, status: 403, intercepted_by: 100090}
+---
+id: MY-005
+name: a normal product search is allowed
+kind: normal
+request: {method: GET, path: /rest/products/search, params: {q: "orange juice"}}
+expected: {decision: allowed, not_rule_ids: [100090]}
+---
+id: MY-006
+name: a long q on a different page is none of this rule's business
+kind: control
+request: {method: GET, path: /api/Products, params: {q: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}}
+expected: {decision: allowed, not_rule_ids: [100090]}
