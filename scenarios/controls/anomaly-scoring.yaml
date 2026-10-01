@@ -18,7 +18,7 @@ request: {method: GET, path: /, params: {wfr_score: phase2}}
 expected: {decision: blocked, rule_ids: [100070], intercepted_by: 949110, inbound_score: 5}
 ---
 id: SCORE-004
-name: two low-severity matches accumulate (3 + 2 = 5) and block
+name: two low severity matches accumulate (3 + 2 = 5) and block
 kind: scoring
 request: {method: GET, path: /, headers: {Host: "127.0.0.1", User-Agent: ""}}
 expected: {decision: blocked, rule_ids: [920350, 920330], intercepted_by: 949110, inbound_score: 5}

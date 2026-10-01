@@ -1,8 +1,8 @@
-# FP-001 — a customer pastes a tracking link into a feedback comment.
+# FP-001: a customer pastes a tracking link into a feedback comment.
 # Before tuning: CRS 932235 (Unix command injection) matches "=mail" and the
 # request is blocked. After tuning (exclusion 1010): allowed, while real
 # attacks in the same field and the same pattern elsewhere are still blocked.
-# Full write-up: docs/tuning-journal/FP-001.md
+# Full write up: docs/tuning-journal/FP-001.md
 id: FP-001
 name: feedback comment containing a URL with utm_source=mail
 kind: false-positive
@@ -37,7 +37,7 @@ request: {method: GET, path: /rest/products/search, params: {q: "x", next: "=mai
 expected: {rule_ids: [932235]}
 ---
 id: FP-001-CTRL-4
-name: the same comment sent to a different route is still blocked (route-scoped exclusion)
+name: the same comment sent to a different route is still blocked (the exclusion only covers its own route)
 kind: control
 request:
   method: POST

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Tiny stand-in for OWASP Juice Shop, used only when the lab runs natively
+"""Tiny stand in for OWASP Juice Shop, used only when the lab runs natively
 (without Docker). It answers every request with 200/201 and echoes what it
 received, so the WAF's decision is the only thing that can make a test fail.
 
@@ -31,7 +31,7 @@ class Handler(BaseHTTPRequestHandler):
             "body": body,
         }
         if url.path == "/" and self.command == "GET":
-            data = b"<html><body><h1>OWASP Juice Shop (stand-in)</h1></body></html>"
+            data = b"<html><body><h1>OWASP Juice Shop (stand in)</h1></body></html>"
             ctype = "text/html"
         else:
             data = json.dumps(payload).encode()

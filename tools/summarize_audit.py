@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Summarise ModSecurity JSON audit-log entries, one line per transaction.
+"""Summarise ModSecurity JSON audit log entries, one line per transaction.
 
     python3 tools/summarize_audit.py                 # last 20 transactions
     python3 tools/summarize_audit.py -n 50

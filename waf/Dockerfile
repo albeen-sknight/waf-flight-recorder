@@ -1,4 +1,4 @@
-# WAF Flight Recorder — WAF image
+# WAF Flight Recorder: WAF image
 #
 # Apache 2.4 + ModSecurity 2.9.7 (Ubuntu packages) + OWASP CRS (pinned tag).
 # The same install script runs natively in the build workspace, so a rule
@@ -23,7 +23,7 @@ RUN apt-get update \
  && rm -rf /var/lib/apt/lists/*
 
 # Baseline copy of the repo's WAF config. compose.yaml mounts ./modsecurity
-# over it read-only, so rule edits only need `docker compose restart waf`.
+# over it as read only, so rule edits only need `docker compose restart waf`.
 COPY waf/ ${WFR_HOME}/waf/
 COPY modsecurity/ ${WFR_HOME}/modsecurity/
 

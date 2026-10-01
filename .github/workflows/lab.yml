@@ -78,7 +78,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: audit-log
+          name: auditlog
           path: evidence/raw/
           retention-days: 14
 

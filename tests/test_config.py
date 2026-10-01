@@ -42,7 +42,7 @@ def test_exclusions_use_the_exclusion_id_range():
 
 def test_every_exclusion_references_the_tuning_journal_or_is_infrastructure():
     text = (MODSEC / "exclusions" / "REQUEST-900-EXCLUSION-RULES-BEFORE-CRS.conf").read_text()
-    blocks = re.split(r"\n(?=# \d{4} — )", text)
+    blocks = re.split(r"\n(?=# \d{4}: )", text)
     for block in blocks[1:]:
         assert "tuning-journal" in block or "Infrastructure" in block, block[:120]
 

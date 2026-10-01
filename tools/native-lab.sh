@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Run the lab WITHOUT Docker on an Ubuntu 24.04 machine (this is how the lab
 # is developed in the cloud build workspace). Same Apache config as the
-# container; the stand-in backend replaces Juice Shop.
+# container; the stand in backend replaces Juice Shop.
 #
 #   sudo apt-get install -y apache2 libapache2-mod-security2
 #   sudo git clone --depth 1 --branch v4.29.0 https://github.com/coreruleset/coreruleset.git /opt/crs

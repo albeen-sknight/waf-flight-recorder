@@ -9,7 +9,7 @@ request: {method: GET, path: /, headers: {User-Agent: "WFR-Lab-Bot/1.0"}}
 expected: {decision: blocked, status: 403, intercepted_by: 100001, only_rule_ids: [100001]}
 ---
 id: HDR-002
-name: lowercase marker is NOT matched (@contains is case-sensitive, t:none)
+name: lowercase marker is NOT matched (@contains cares about case, t:none)
 kind: control
 request: {method: GET, path: /, headers: {User-Agent: "wfr-lab-bot/1.0"}}
 expected: {decision: allowed, not_rule_ids: [100001]}
@@ -62,7 +62,7 @@ request: {method: GET, path: /fTp/legal.md}
 expected: {decision: blocked, intercepted_by: 100020, not_rule_ids: [100040]}
 ---
 id: RTE-005
-name: a similar but different route is NOT blocked (rule is route-scoped)
+name: a similar but different route is NOT blocked (rule only covers its own route)
 kind: control
 request: {method: GET, path: /rest/ftp-status}
 expected: {decision: allowed, not_rule_ids: [100020, 100040]}
@@ -81,13 +81,13 @@ request: {method: GET, path: /rest/products/search, params: {q: WFR-ARG-MARKER}}
 expected: {decision: allowed, not_rule_ids: [100030]}
 ---
 id: ARG-003
-name: marker as a top-level JSON field is blocked (ARGS:wfr_marker)
+name: marker as a JSON field at the top level is blocked (ARGS:wfr_marker)
 kind: control
 request: {method: POST, path: /api/Feedbacks/, json: {wfr_marker: WFR-ARG-MARKER, rating: 5}}
 expected: {decision: blocked, intercepted_by: 100030}
 ---
 id: ARG-004
-name: marker in a form-encoded body is blocked
+name: marker in a form body is blocked
 kind: control
 request: {method: POST, path: /api/Feedbacks/, data: {wfr_marker: WFR-ARG-MARKER}}
 expected: {decision: blocked, intercepted_by: 100030}

@@ -1,4 +1,4 @@
-"""WAF Flight Recorder — shared helpers for the scenario runner and the tests.
+"""WAF Flight Recorder: shared helpers for the scenario runner and the tests.
 
 A scenario is a YAML document describing ONE request to the lab and what the
 WAF is expected to do with it. `send()` sends it and returns an `Outcome`
@@ -102,7 +102,7 @@ def parse_entry(entry: dict) -> tuple[bool, int | None, list[Match], int | None,
 
 
 def find_audit_entry(transaction_id: str, timeout: float = 5.0) -> dict | None:
-    """Return the audit-log entry for a transaction id (the log is JSON lines)."""
+    """Return the audit log entry for a transaction id (the log is JSON lines)."""
     deadline = time.time() + timeout
     needle = f'"transaction_id":"{transaction_id}"'
     while time.time() < deadline:
@@ -120,7 +120,7 @@ def build_request(scenario: dict, base_url: str = BASE_URL) -> dict:
     url = base_url.rstrip("/") + req.get("path", "/")
     headers = {"User-Agent": "Mozilla/5.0 (WFR lab test runner)", "Host": "localhost"}
     if urlsplit(base_url).hostname not in {"localhost", "127.0.0.1", "waf"}:
-        headers.pop("Host")  # real hostname (demo) — let requests set it
+        headers.pop("Host")  # real hostname (demo): let requests set it
     headers.update(req.get("headers", {}) or {})
     headers["X-WFR-Scenario"] = scenario["id"]
     headers["X-WFR-Run"] = uuid.uuid4().hex[:12]

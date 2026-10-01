@@ -1,4 +1,4 @@
-# Raw flight-recorder output (may contain request data) — never committed.
+# Raw flight recorder output (may contain request data). Never committed.
 evidence/raw/*
 !evidence/raw/.gitkeep
 # Secrets (Cloudflare tunnel token, service tokens)

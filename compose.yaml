@@ -1,11 +1,11 @@
-# WAF Flight Recorder — lab stack
+# WAF Flight Recorder: lab stack
 #
 #   docker compose up -d --build                     start the lab (http://localhost:8080)
 #   docker compose --profile test run --rm tests     run the regression tests
 #   docker compose --profile demo up -d              also start the Cloudflare Tunnel
 #   docker compose down                              stop everything
 #
-# Juice Shop is deliberately vulnerable: it is on an internal-only network
+# Juice Shop is deliberately vulnerable: it sits on an internal network only
 # with no published port. The only way in is through the WAF.
 
 name: waf-flight-recorder
@@ -59,7 +59,7 @@ services:
     image: cloudflare/cloudflared:2026.9.3
     command: tunnel --no-autoupdate run
     environment:
-      # Set in .env (git-ignored). Empty = the tunnel will refuse to start.
+      # Set in .env (ignored by git). Empty = the tunnel will refuse to start.
       TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN:-}
     networks: [edge]
     depends_on:
