@@ -1,0 +1,48 @@
+# Classic test strings against the OWASP CRS, sent ONLY to the local lab.
+id: CRS-SQLI-001
+name: tautology in product search (the vulnerable Juice Shop endpoint)
+kind: control
+request: {method: GET, path: /rest/products/search, params: {q: "' OR 1=1--"}}
+expected: {decision: blocked, rule_ids: [942100], intercepted_by: 949110, min_inbound_score: 5}
+---
+id: CRS-SQLI-002
+name: UNION-based SQLi in product search
+kind: control
+request: {method: GET, path: /rest/products/search, params: {q: "')) UNION SELECT id, email, password, '4','5','6','7','8','9' FROM Users--"}}
+expected: {decision: blocked, intercepted_by: 949110, min_inbound_score: 5}
+---
+id: CRS-SQLI-003
+name: SQLi in the login email field (JSON body)
+kind: control
+request: {method: POST, path: /rest/user/login, json: {email: "' OR 1=1--", password: "x"}}
+expected: {decision: blocked, rule_ids: [942100], intercepted_by: 949110}
+---
+id: CRS-XSS-001
+name: script tag in a query parameter
+kind: control
+request: {method: GET, path: /rest/products/search, params: {q: "<script>alert(1)</script>"}}
+expected: {decision: blocked, rule_ids: [941100, 941110], intercepted_by: 949110}
+---
+id: CRS-XSS-002
+name: "iframe javascript: payload (Juice Shop DOM XSS challenge string)"
+kind: control
+request: {method: GET, path: /rest/products/search, params: {q: "<iframe src=\"javascript:alert(`xss`)\">"}}
+expected: {decision: blocked, intercepted_by: 949110}
+---
+id: CRS-LFI-001
+name: path traversal in a parameter
+kind: control
+request: {method: GET, path: /rest/products/search, params: {file: "../../../../etc/passwd"}}
+expected: {decision: blocked, rule_ids: [930100, 930120], intercepted_by: 949110}
+---
+id: CRS-RCE-001
+name: command injection in a parameter
+kind: control
+request: {method: GET, path: /rest/products/search, params: {q: "x; cat /etc/passwd"}}
+expected: {decision: blocked, intercepted_by: 949110}
+---
+id: CRS-SCAN-001
+name: known scanner User-Agent
+kind: control
+request: {method: GET, path: /, headers: {User-Agent: "sqlmap/1.8.2#stable (https://sqlmap.org)"}}
+expected: {decision: blocked, rule_ids: [913100], intercepted_by: 949110}

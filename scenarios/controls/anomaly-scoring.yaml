@@ -1,0 +1,24 @@
+# Anomaly scoring (Phase 5). Threshold = 5 (crs-setup.conf, WFR_INBOUND_THRESHOLD).
+id: SCORE-001
+name: one WARNING match (numeric Host, 920350 = 3 points) is logged but allowed
+kind: scoring
+request: {method: GET, path: /, headers: {Host: "127.0.0.1"}}
+expected: {decision: allowed, rule_ids: [920350], inbound_score: 3}
+---
+id: SCORE-002
+name: local rule adding +5 in PHASE 1 has no effect (score reset by CRS 901200)
+kind: scoring
+request: {method: GET, path: /, params: {wfr_score: phase1}}
+expected: {decision: allowed, rule_ids: [100071], inbound_score: 0}
+---
+id: SCORE-003
+name: the same +5 in PHASE 2 reaches the threshold and 949110 blocks
+kind: scoring
+request: {method: GET, path: /, params: {wfr_score: phase2}}
+expected: {decision: blocked, rule_ids: [100070], intercepted_by: 949110, inbound_score: 5}
+---
+id: SCORE-004
+name: two low-severity matches accumulate (3 + 2 = 5) and block
+kind: scoring
+request: {method: GET, path: /, headers: {Host: "127.0.0.1", User-Agent: ""}}
+expected: {decision: blocked, rule_ids: [920350, 920330], intercepted_by: 949110, inbound_score: 5}
