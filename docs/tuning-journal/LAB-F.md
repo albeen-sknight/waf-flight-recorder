@@ -1,6 +1,8 @@
-# LAB-F: A local rule that's too broad on purpose, and the narrow fix
+# LAB-F: A rule of mine that was too broad on purpose, and the narrow fix
 
 Rule **100050**, in `modsecurity/custom-rules/140-deliberate-fp.conf`.
+
+![Lab F before and after](../screenshots/17-labf-before-after.png)
 
 ## v1: too broad (deliberately)
 
@@ -8,7 +10,7 @@ Rule **100050**, in `modsecurity/custom-rules/140-deliberate-fp.conf`.
 SecRule ARGS "@contains drop" "id:100050,phase:2,deny,status:403,t:none,t:lowercase,..."
 ```
 
-The idea: stop `DROP TABLE` in any parameter.
+My idea: stop `DROP TABLE` in any parameter.
 
 | Request | Result |
 | --- | --- |
@@ -19,7 +21,7 @@ The idea: stop `DROP TABLE` in any parameter.
 
 ## What went wrong
 
-The rule looked for a **fragment of a word**. The threat is a **statement**.
+My rule looked for a **fragment of a word**. The threat is a **statement**.
 
 ## v2: narrowed
 
@@ -38,6 +40,6 @@ SecRule ARGS "@rx \bdrop\s+(?:table|database|schema|view)\b" \
 | LABF-002 | `q=1; DROP TABLE users` | blocked | **blocked** ([sample](../../evidence/sanitized-samples/labf-after-drop-table-blocked.json)) |
 | LABF-003 | `q=x; DrOp    TaBlE users` | blocked | **blocked** |
 
-## The takeaway
+## What I took from it
 
-My rules are code too. They get the same treatment as a CRS false positive: evidence, a tighter condition, and a test for the legit case and the attack. CRS already handles SQL injection far better (942xxx). This rule exists so I could practise the tuning loop on something I wrote.
+My rules are code too. They get the same treatment as a CRS false positive: evidence, a tighter condition, and a test for the legit case and the attack. CRS already handles SQL injection far better (942xxx). I wrote this rule so I could practise the tuning loop on something of my own.
