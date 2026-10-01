@@ -1,0 +1,47 @@
+{
+  "transaction": {
+    "time": "01/Oct/2026:10:48:39.191672 +0200",
+    "transaction_id": "ar4eZ4q-3QgAuTQ_Zor6SAAAAAE",
+    "remote_address": "192.0.2.10",
+    "remote_port": 52924,
+    "local_address": "127.0.0.1",
+    "local_port": 8080
+  },
+  "request": {
+    "request_line": "GET /rest/products/search?q=cough%20drops HTTP/1.1",
+    "headers": {
+      "Host": "localhost",
+      "User-Agent": "curl/8.5.0",
+      "Accept": "*/*"
+    }
+  },
+  "response": {
+    "protocol": "HTTP/1.1",
+    "status": 200,
+    "headers": {
+      "X-WFR-Transaction": "ar4eZ4q-3QgAuTQ_Zor6SAAAAAE",
+      "Content-Type": "application/json",
+      "Content-Length": "121"
+    }
+  },
+  "audit_data": {
+    "handler": "proxy-server",
+    "stopwatch": {
+      "p1": 829,
+      "p2": 1256,
+      "p3": 166,
+      "p4": 209,
+      "p5": 54,
+      "sr": 0,
+      "sw": 0,
+      "l": 0,
+      "gc": 0
+    },
+    "producer": [
+      "ModSecurity for Apache/2.9.7 (http://www.modsecurity.org/)",
+      "OWASP_CRS/4.29.0"
+    ],
+    "server": "Apache/2.4.58 (Ubuntu)",
+    "engine_mode": "ENABLED"
+  }
+}

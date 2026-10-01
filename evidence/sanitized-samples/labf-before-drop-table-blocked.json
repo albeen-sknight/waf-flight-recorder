@@ -1,0 +1,58 @@
+{
+  "transaction": {
+    "time": "01/Oct/2026:10:48:23.528340 +0200",
+    "transaction_id": "ar4eV-XSIiJAFGquetfsfAAAAAM",
+    "remote_address": "192.0.2.10",
+    "remote_port": 44446,
+    "local_address": "127.0.0.1",
+    "local_port": 8080
+  },
+  "request": {
+    "request_line": "GET /rest/products/search?q=1%3B%20DROP%20TABLE%20users HTTP/1.1",
+    "headers": {
+      "Host": "localhost",
+      "User-Agent": "curl/8.5.0",
+      "Accept": "*/*"
+    }
+  },
+  "response": {
+    "protocol": "HTTP/1.1",
+    "status": 403,
+    "headers": {
+      "X-WFR-Transaction": "ar4eV-XSIiJAFGquetfsfAAAAAM",
+      "Content-Length": "92",
+      "Content-Type": "text/html; charset=iso-8859-1"
+    }
+  },
+  "audit_data": {
+    "messages": [
+      "Access denied with code 403 (phase 2). String match \"drop\" at ARGS:q. [file \"/home/claude/waf-flight-recorder/modsecurity/custom-rules/140-deliberate-fp.conf\"] [line \"16\"] [id \"100050\"] [msg \"WFR lab F: DROP keyword in an argument\"] [data \"ARGS:q=1; drop table users\"] [severity \"CRITICAL\"] [tag \"wfr-lab\"] [tag \"wfr/lab-f-false-positive\"]"
+    ],
+    "error_messages": [
+      "[file \"apache2_util.c\"] [line 275] [level 3] [client 127.0.0.1] ModSecurity: Access denied with code 403 (phase 2). String match \"drop\" at ARGS:q. [file \"/home/claude/waf-flight-recorder/modsecurity/custom-rules/140-deliberate-fp.conf\"] [line \"16\"] [id \"100050\"] [msg \"WFR lab F: DROP keyword in an argument\"] [data \"ARGS:q=1; drop table users\"] [severity \"CRITICAL\"] [tag \"wfr-lab\"] [tag \"wfr/lab-f-false-positive\"] [hostname \"localhost\"] [uri \"/rest/products/search\"] [unique_id \"ar4eV-XSIiJAFGquetfsfAAAAAM\"]"
+    ],
+    "action": {
+      "intercepted": true,
+      "phase": 2,
+      "message": "String match \"drop\" at ARGS:q."
+    },
+    "handler": "proxy-server",
+    "stopwatch": {
+      "p1": 512,
+      "p2": 13,
+      "p3": 0,
+      "p4": 0,
+      "p5": 35,
+      "sr": 0,
+      "sw": 0,
+      "l": 0,
+      "gc": 0
+    },
+    "producer": [
+      "ModSecurity for Apache/2.9.7 (http://www.modsecurity.org/)",
+      "OWASP_CRS/4.29.0"
+    ],
+    "server": "Apache/2.4.58 (Ubuntu)",
+    "engine_mode": "ENABLED"
+  }
+}

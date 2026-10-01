@@ -19,6 +19,7 @@ services:
     environment:
       BACKEND_URL: http://juice-shop:3000
       WFR_RULE_ENGINE: ${WFR_RULE_ENGINE:-On}
+      WFR_INBOUND_THRESHOLD: ${WFR_INBOUND_THRESHOLD:-5}
     ports:
       # Bound to localhost only: not reachable from your LAN.
       - "127.0.0.1:8080:8080"

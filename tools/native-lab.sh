@@ -17,8 +17,9 @@ export CRS_HOME="${CRS_HOME:-/opt/crs}"
 export WFR_LOG_DIR="$REPO/evidence/raw"
 export BACKEND_URL="${BACKEND_URL:-http://127.0.0.1:3000}"
 export WFR_RULE_ENGINE="${WFR_RULE_ENGINE:-On}"
+export WFR_INBOUND_THRESHOLD="${WFR_INBOUND_THRESHOLD:-5}"
 
-apache() { sudo --preserve-env=WFR_HOME,CRS_HOME,WFR_LOG_DIR,BACKEND_URL,WFR_RULE_ENGINE apache2ctl "$@"; }
+apache() { sudo --preserve-env=WFR_HOME,CRS_HOME,WFR_LOG_DIR,BACKEND_URL,WFR_RULE_ENGINE,WFR_INBOUND_THRESHOLD apache2ctl "$@"; }
 
 backend_start() {
   if ! curl -s -o /dev/null "http://127.0.0.1:3000/"; then
