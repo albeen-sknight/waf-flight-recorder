@@ -1,0 +1,71 @@
+# WAF Flight Recorder — lab stack
+#
+#   docker compose up -d --build                     start the lab (http://localhost:8080)
+#   docker compose --profile test run --rm tests     run the regression tests
+#   docker compose --profile demo up -d              also start the Cloudflare Tunnel
+#   docker compose down                              stop everything
+#
+# Juice Shop is deliberately vulnerable: it is on an internal-only network
+# with no published port. The only way in is through the WAF.
+
+name: waf-flight-recorder
+
+services:
+  waf:
+    build:
+      context: .
+      dockerfile: waf/Dockerfile
+    image: waf-flight-recorder/waf:local
+    environment:
+      BACKEND_URL: http://juice-shop:3000
+      WFR_RULE_ENGINE: ${WFR_RULE_ENGINE:-On}
+    ports:
+      # Bound to localhost only: not reachable from your LAN.
+      - "127.0.0.1:8080:8080"
+    volumes:
+      # Edit rules on the host, then: docker compose restart waf
+      - ./modsecurity:/opt/wfr/modsecurity:ro
+      # The flight recorder: audit.json, apache-access.log, apache-error.log
+      - ./evidence/raw:/var/log/modsec
+    networks: [edge, backend]
+    depends_on: [juice-shop]
+    restart: unless-stopped
+
+  juice-shop:
+    image: bkimminich/juice-shop:v20.2.0
+    networks: [backend]
+    # No "ports:" on purpose.
+    restart: unless-stopped
+
+  tests:
+    profiles: [test]
+    build:
+      context: .
+      dockerfile: tests/Dockerfile
+    environment:
+      WFR_BASE_URL: http://waf:8080
+      WFR_AUDIT_LOG: /evidence/audit.json
+      WFR_ISOLATION_TARGET: http://juice-shop:3000/
+    volumes:
+      - ./evidence/raw:/evidence:ro
+    networks: [edge]
+    depends_on:
+      waf:
+        condition: service_healthy
+
+  cloudflared:
+    profiles: [demo]
+    image: cloudflare/cloudflared:2026.9.3
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN:?set CLOUDFLARE_TUNNEL_TOKEN in .env}
+    networks: [edge]
+    depends_on:
+      waf:
+        condition: service_healthy
+    restart: unless-stopped
+
+networks:
+  edge: {}
+  backend:
+    internal: true
