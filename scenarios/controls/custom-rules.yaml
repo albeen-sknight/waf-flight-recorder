@@ -1,0 +1,137 @@
+# Security controls for the local rules in modsecurity/custom-rules/.
+# Each rule has at least one "must block" and one "must NOT block" scenario.
+
+# --- Lab B: header policy (100001) ---------------------------------------------
+id: HDR-001
+name: lab bot marker in User-Agent is blocked
+kind: control
+request: {method: GET, path: /, headers: {User-Agent: "WFR-Lab-Bot/1.0"}}
+expected: {decision: blocked, status: 403, intercepted_by: 100001, only_rule_ids: [100001]}
+---
+id: HDR-002
+name: lowercase marker is NOT matched (@contains is case-sensitive, t:none)
+kind: control
+request: {method: GET, path: /, headers: {User-Agent: "wfr-lab-bot/1.0"}}
+expected: {decision: allowed, not_rule_ids: [100001]}
+---
+# --- Lab A: method policy (100010) ---------------------------------------------
+id: MTH-001
+name: WebDAV PROPFIND is refused with 405
+kind: control
+request: {method: PROPFIND, path: /}
+expected: {decision: blocked, status: 405, intercepted_by: 100010}
+---
+id: MTH-002
+name: WebDAV MKCOL is refused with 405
+kind: control
+request: {method: MKCOL, path: /new-folder}
+expected: {decision: blocked, status: 405, intercepted_by: 100010}
+---
+id: MTH-003
+name: PATCH is allowed (would be blocked by a naive @within PROPPATCH check)
+kind: control
+request: {method: PATCH, path: /api/Addresss/1, json: {city: "Madrid"}}
+expected: {decision: allowed, not_rule_ids: [100010]}
+---
+# --- Lab C + E: route policy and transformations (100020, 100040) ---------------
+id: RTE-001
+name: /ftp is blocked; naive t:none twin also matches
+kind: control
+request: {method: GET, path: /ftp/}
+expected: {decision: blocked, status: 403, intercepted_by: 100020, rule_ids: [100040, 100020]}
+---
+id: RTE-002
+name: /FTP (case) is blocked only thanks to t:lowercase
+kind: control
+request: {method: GET, path: /FTP/}
+expected: {decision: blocked, intercepted_by: 100020, not_rule_ids: [100040]}
+---
+id: RTE-003
+name: //ftp (double slash) is blocked; Apache already merged the slashes
+# Finding: Apache 2.4 (MergeSlashes On) collapses // before ModSecurity builds
+# REQUEST_FILENAME, so even the naive t:none rule sees /ftp/. Normalisation
+# can happen in the web server, not only in rule transformations.
+kind: control
+request: {method: GET, path: //ftp/}
+expected: {decision: blocked, intercepted_by: 100020, rule_ids: [100040, 100020]}
+---
+id: RTE-004
+name: /fTp/legal.md (mixed case, a file) is blocked
+kind: control
+request: {method: GET, path: /fTp/legal.md}
+expected: {decision: blocked, intercepted_by: 100020, not_rule_ids: [100040]}
+---
+id: RTE-005
+name: a similar but different route is NOT blocked (rule is route-scoped)
+kind: control
+request: {method: GET, path: /rest/ftp-status}
+expected: {decision: allowed, not_rule_ids: [100020, 100040]}
+---
+# --- Lab D: argument inspection (100030) -----------------------------------------
+id: ARG-001
+name: marker in the wfr_marker query parameter is blocked
+kind: control
+request: {method: GET, path: /rest/products/search, params: {wfr_marker: WFR-ARG-MARKER}}
+expected: {decision: blocked, intercepted_by: 100030}
+---
+id: ARG-002
+name: same value in a different parameter is NOT blocked (narrow target)
+kind: control
+request: {method: GET, path: /rest/products/search, params: {q: WFR-ARG-MARKER}}
+expected: {decision: allowed, not_rule_ids: [100030]}
+---
+id: ARG-003
+name: marker as a top-level JSON field is blocked (ARGS:wfr_marker)
+kind: control
+request: {method: POST, path: /api/Feedbacks/, json: {wfr_marker: WFR-ARG-MARKER, rating: 5}}
+expected: {decision: blocked, intercepted_by: 100030}
+---
+id: ARG-004
+name: marker in a form-encoded body is blocked
+kind: control
+request: {method: POST, path: /api/Feedbacks/, data: {wfr_marker: WFR-ARG-MARKER}}
+expected: {decision: blocked, intercepted_by: 100030}
+---
+id: ARG-005
+name: nested JSON field is named outer.wfr_marker and is NOT matched
+kind: control
+request: {method: POST, path: /api/Feedbacks/, json: {outer: {wfr_marker: WFR-ARG-MARKER}}}
+expected: {decision: allowed, not_rule_ids: [100030]}
+---
+# --- Lab F: deliberate false positive, narrowed (100050) --------------------------
+id: LABF-001
+name: shopper searching for "cough drops" is allowed after narrowing
+kind: false-positive
+request: {method: GET, path: /rest/products/search, params: {q: cough drops}}
+expected: {decision: allowed, not_rule_ids: [100050]}
+---
+id: LABF-002
+name: DROP TABLE statement is still blocked by 100050
+kind: control
+request: {method: GET, path: /rest/products/search, params: {q: "1; DROP TABLE users"}}
+expected: {decision: blocked, intercepted_by: 100050}
+---
+id: LABF-003
+name: mixed case and extra whitespace are normalised and blocked
+kind: control
+request: {method: GET, path: /rest/products/search, params: {q: "x; DrOp    TaBlE users"}}
+expected: {decision: blocked, intercepted_by: 100050}
+---
+# --- Lab G: chained condition (100060) --------------------------------------------
+id: CHN-001
+name: DELETE on feedback is blocked (both conditions true)
+kind: control
+request: {method: DELETE, path: /api/Feedbacks/1}
+expected: {decision: blocked, intercepted_by: 100060}
+---
+id: CHN-002
+name: GET on feedback is allowed (only the path condition is true)
+kind: control
+request: {method: GET, path: /api/Feedbacks/1}
+expected: {decision: allowed, not_rule_ids: [100060]}
+---
+id: CHN-003
+name: DELETE on a basket item is allowed (only the method condition is true)
+kind: control
+request: {method: DELETE, path: /api/BasketItems/7}
+expected: {decision: allowed, not_rule_ids: [100060]}

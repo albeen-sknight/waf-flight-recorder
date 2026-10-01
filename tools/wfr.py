@@ -144,6 +144,9 @@ def send(scenario: dict, base_url: str = BASE_URL, extra_headers: dict | None = 
     if entry is None:
         return Outcome(resp.status_code, tx, intercepted=False, phase=None, entry=None)
     intercepted, phase, matches, blocking, detection = parse_entry(entry)
+    # CRS rule 980170 reports scores only when a score was accumulated.
+    blocking = 0 if blocking is None else blocking
+    detection = 0 if detection is None else detection
     return Outcome(resp.status_code, tx, intercepted, phase, matches, blocking, detection, entry)
 
 

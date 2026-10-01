@@ -1,0 +1,49 @@
+# Normal traffic: must be ALLOWED and must not match any rule.
+# If one of these starts matching, a rule or a CRS setting became too broad.
+id: NRM-001
+name: home page
+kind: normal
+request: {method: GET, path: /}
+expected: {decision: allowed, only_rule_ids: []}
+---
+id: NRM-002
+name: product search for a normal term
+kind: normal
+request: {method: GET, path: /rest/products/search, params: {q: apple juice}}
+expected: {decision: allowed, only_rule_ids: []}
+---
+id: NRM-003
+name: change basket quantity (PUT, used by the Juice Shop frontend)
+kind: normal
+request: {method: PUT, path: /api/BasketItems/1, json: {quantity: 2}}
+expected: {decision: allowed, only_rule_ids: []}
+---
+id: NRM-004
+name: remove a basket item (DELETE, used by the Juice Shop frontend)
+kind: normal
+request: {method: DELETE, path: /api/BasketItems/1}
+expected: {decision: allowed, only_rule_ids: []}
+---
+id: NRM-005
+name: plain customer feedback
+kind: normal
+request:
+  method: POST
+  path: /api/Feedbacks/
+  json: {comment: "Great juice, fast delivery!", rating: 5, captchaId: 1, captcha: "12"}
+expected: {decision: allowed, only_rule_ids: []}
+---
+id: NRM-006
+name: feedback list
+kind: normal
+request: {method: GET, path: /api/Feedbacks/}
+expected: {decision: allowed, only_rule_ids: []}
+---
+id: NRM-007
+name: login attempt with normal credentials (synthetic account)
+kind: normal
+request:
+  method: POST
+  path: /rest/user/login
+  json: {email: "lab.user@example.test", password: "Correct-Horse-9"}
+expected: {decision: allowed, only_rule_ids: []}

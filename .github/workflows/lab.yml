@@ -1,0 +1,73 @@
+name: WAF lab
+
+# Builds the real Docker lab (WAF + OWASP Juice Shop) and runs every scenario
+# against it. A rule or tuning change that breaks an allow/block expectation
+# fails this workflow.
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  config:
+    name: Static config checks
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12"}
+      - run: pip install -r tests/requirements.txt
+      - run: python -m pytest tests/test_config.py
+
+  lab:
+    name: Docker lab + scenarios
+    runs-on: ubuntu-24.04
+    needs: config
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build and start the lab
+        run: docker compose up -d --build --wait --wait-timeout 180
+
+      - name: Apache config test inside the WAF container
+        run: docker compose exec -T waf apache2ctl -t
+
+      - name: Wait for Juice Shop behind the WAF
+        run: |
+          for i in $(seq 1 60); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' -H 'Host: localhost' http://127.0.0.1:8080/ || true)
+            echo "attempt $i: $code"; [ "$code" = "200" ] && exit 0; sleep 3
+          done
+          exit 1
+
+      - name: Isolation from the host (Juice Shop has no published port)
+        run: |
+          if curl -s -m 3 http://127.0.0.1:3000/ >/dev/null; then
+            echo "Juice Shop is reachable directly on :3000"; exit 1
+          fi
+
+      - name: Run all scenarios (test container on the edge network)
+        run: docker compose --profile test run --rm --build tests
+
+      - name: Audit summary
+        if: always()
+        run: |
+          sudo chmod -R a+r evidence/raw || true
+          python3 tools/summarize_audit.py -n 200 || true
+
+      - name: Container logs on failure
+        if: failure()
+        run: docker compose logs --no-color --tail=200
+
+      - name: Upload flight-recorder evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: audit-log
+          path: evidence/raw/
+          retention-days: 14
+
+      - name: Stop the lab
+        if: always()
+        run: docker compose down -v
