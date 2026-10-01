@@ -1,0 +1,72 @@
+{
+  "transaction": {
+    "time": "01/Oct/2026:10:50:06.942088 +0200",
+    "transaction_id": "ar4evr8Z9dXC7xwMdWNDtAAAAEM",
+    "remote_address": "192.0.2.10",
+    "remote_port": 41560,
+    "local_address": "127.0.0.1",
+    "local_port": 8080
+  },
+  "request": {
+    "request_line": "DELETE /api/BasketItems/1 HTTP/1.1",
+    "headers": {
+      "User-Agent": "Mozilla/5.0 (WFR lab test runner)",
+      "Accept-Encoding": "gzip, deflate",
+      "Accept": "*/*",
+      "Connection": "keep-alive",
+      "Host": "localhost",
+      "X-WFR-Scenario": "FP-002",
+      "X-WFR-Run": "37bd3ac7c0c3",
+      "Content-Length": "0"
+    },
+    "body": [
+      ""
+    ]
+  },
+  "response": {
+    "protocol": "HTTP/1.1",
+    "status": 403,
+    "headers": {
+      "X-WFR-Transaction": "ar4evr8Z9dXC7xwMdWNDtAAAAEM",
+      "Content-Length": "92",
+      "Keep-Alive": "timeout=5, max=100",
+      "Connection": "Keep-Alive",
+      "Content-Type": "text/html; charset=iso-8859-1"
+    }
+  },
+  "audit_data": {
+    "messages": [
+      "Warning. Match of \"within %{tx.allowed_methods}\" against \"REQUEST_METHOD\" required. [file \"/opt/crs/rules/REQUEST-911-METHOD-ENFORCEMENT.conf\"] [line \"44\"] [id \"911100\"] [msg \"Method is not allowed by policy\"] [data \"DELETE\"] [severity \"CRITICAL\"] [ver \"OWASP_CRS/4.29.0\"] [tag \"application-multi\"] [tag \"language-multi\"] [tag \"platform-multi\"] [tag \"attack-generic\"] [tag \"paranoia-level/1\"] [tag \"OWASP_CRS\"] [tag \"OWASP_CRS/METHOD-ENFORCEMENT\"] [tag \"capec/1000/210/272/220/274\"]",
+      "Access denied with code 403 (phase 2). Operator GE matched 5 at TX:blocking_inbound_anomaly_score. [file \"/opt/crs/rules/REQUEST-949-BLOCKING-EVALUATION.conf\"] [line \"233\"] [id \"949110\"] [msg \"Inbound Anomaly Score Exceeded (Total Score: 5)\"] [ver \"OWASP_CRS/4.29.0\"] [tag \"anomaly-evaluation\"] [tag \"OWASP_CRS\"]",
+      "Warning. Unconditional match in SecAction. [file \"/opt/crs/rules/RESPONSE-980-CORRELATION.conf\"] [line \"99\"] [id \"980170\"] [msg \"Anomaly Scores: (Inbound Scores: blocking=5, detection=5, per_pl=5-0-0-0, threshold=5) - (Outbound Scores: blocking=0, detection=0, per_pl=0-0-0-0, threshold=4) - (SQLI=0, XSS=0, RFI=0, LFI=0, RCE=0, PHPI=0, HTTP=0, SESS=0, COMBINED_SCORE=5)\"] [ver \"OWASP_CRS/4.29.0\"] [tag \"reporting\"] [tag \"OWASP_CRS\"]"
+    ],
+    "error_messages": [
+      "[file \"apache2_util.c\"] [line 275] [level 3] [client 127.0.0.1] ModSecurity: Warning. Match of \"within %{tx.allowed_methods}\" against \"REQUEST_METHOD\" required. [file \"/opt/crs/rules/REQUEST-911-METHOD-ENFORCEMENT.conf\"] [line \"44\"] [id \"911100\"] [msg \"Method is not allowed by policy\"] [data \"DELETE\"] [severity \"CRITICAL\"] [ver \"OWASP_CRS/4.29.0\"] [tag \"application-multi\"] [tag \"language-multi\"] [tag \"platform-multi\"] [tag \"attack-generic\"] [tag \"paranoia-level/1\"] [tag \"OWASP_CRS\"] [tag \"OWASP_CRS/METHOD-ENFORCEMENT\"] [tag \"capec/1000/210/272/220/274\"] [hostname \"localhost\"] [uri \"/api/BasketItems/1\"] [unique_id \"ar4evr8Z9dXC7xwMdWNDtAAAAEM\"]",
+      "[file \"apache2_util.c\"] [line 275] [level 3] [client 127.0.0.1] ModSecurity: Access denied with code 403 (phase 2). Operator GE matched 5 at TX:blocking_inbound_anomaly_score. [file \"/opt/crs/rules/REQUEST-949-BLOCKING-EVALUATION.conf\"] [line \"233\"] [id \"949110\"] [msg \"Inbound Anomaly Score Exceeded (Total Score: 5)\"] [ver \"OWASP_CRS/4.29.0\"] [tag \"anomaly-evaluation\"] [tag \"OWASP_CRS\"] [hostname \"localhost\"] [uri \"/api/BasketItems/1\"] [unique_id \"ar4evr8Z9dXC7xwMdWNDtAAAAEM\"]",
+      "[file \"apache2_util.c\"] [line 275] [level 3] [client 127.0.0.1] ModSecurity: Warning. Unconditional match in SecAction. [file \"/opt/crs/rules/RESPONSE-980-CORRELATION.conf\"] [line \"99\"] [id \"980170\"] [msg \"Anomaly Scores: (Inbound Scores: blocking=5, detection=5, per_pl=5-0-0-0, threshold=5) - (Outbound Scores: blocking=0, detection=0, per_pl=0-0-0-0, threshold=4) - (SQLI=0, XSS=0, RFI=0, LFI=0, RCE=0, PHPI=0, HTTP=0, SESS=0, COMBINED_SCORE=5)\"] [ver \"OWASP_CRS/4.29.0\"] [tag \"reporting\"] [tag \"OWASP_CRS\"] [hostname \"localhost\"] [uri \"/api/BasketItems/1\"] [unique_id \"ar4evr8Z9dXC7xwMdWNDtAAAAEM\"]"
+    ],
+    "action": {
+      "intercepted": true,
+      "phase": 2,
+      "message": "Operator GE matched 5 at TX:blocking_inbound_anomaly_score."
+    },
+    "handler": "proxy-server",
+    "stopwatch": {
+      "p1": 670,
+      "p2": 656,
+      "p3": 0,
+      "p4": 0,
+      "p5": 120,
+      "sr": 0,
+      "sw": 0,
+      "l": 0,
+      "gc": 0
+    },
+    "producer": [
+      "ModSecurity for Apache/2.9.7 (http://www.modsecurity.org/)",
+      "OWASP_CRS/4.29.0"
+    ],
+    "server": "Apache/2.4.58 (Ubuntu)",
+    "engine_mode": "ENABLED"
+  }
+}

@@ -1,0 +1,58 @@
+{
+  "transaction": {
+    "time": "01/Oct/2026:10:51:30.959081 +0200",
+    "transaction_id": "ar4fEqUUtpghSxT7cH4T_gAAAEA",
+    "remote_address": "192.0.2.10",
+    "remote_port": 50954,
+    "local_address": "127.0.0.1",
+    "local_port": 8080
+  },
+  "request": {
+    "request_line": "POST /api/Feedbacks/ HTTP/1.1",
+    "headers": {
+      "User-Agent": "Mozilla/5.0 (WFR lab test runner)",
+      "Accept-Encoding": "gzip, deflate",
+      "Accept": "*/*",
+      "Connection": "keep-alive",
+      "Host": "localhost",
+      "X-WFR-Scenario": "FP-001",
+      "X-WFR-Run": "75adf45646a9",
+      "Content-Length": "146",
+      "Content-Type": "application/json"
+    },
+    "body": [
+      "{\"comment\": \"The link https://example.com/?ref=juice&utm_source=mail in your newsletter has a typo\", \"rating\": 4, \"captchaId\": 1, \"captcha\": \"12\"}"
+    ]
+  },
+  "response": {
+    "protocol": "HTTP/1.1",
+    "status": 201,
+    "headers": {
+      "X-WFR-Transaction": "ar4fEqUUtpghSxT7cH4T_gAAAEA",
+      "Content-Type": "application/json",
+      "Content-Length": "259",
+      "Keep-Alive": "timeout=5, max=100",
+      "Connection": "Keep-Alive"
+    }
+  },
+  "audit_data": {
+    "handler": "proxy-server",
+    "stopwatch": {
+      "p1": 901,
+      "p2": 2095,
+      "p3": 117,
+      "p4": 238,
+      "p5": 40,
+      "sr": 0,
+      "sw": 0,
+      "l": 0,
+      "gc": 0
+    },
+    "producer": [
+      "ModSecurity for Apache/2.9.7 (http://www.modsecurity.org/)",
+      "OWASP_CRS/4.29.0"
+    ],
+    "server": "Apache/2.4.58 (Ubuntu)",
+    "engine_mode": "ENABLED"
+  }
+}
