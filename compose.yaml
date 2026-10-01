@@ -59,7 +59,8 @@ services:
     image: cloudflare/cloudflared:2026.9.3
     command: tunnel --no-autoupdate run
     environment:
-      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN:?set CLOUDFLARE_TUNNEL_TOKEN in .env}
+      # Set in .env (git-ignored). Empty = the tunnel will refuse to start.
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN:-}
     networks: [edge]
     depends_on:
       waf:
