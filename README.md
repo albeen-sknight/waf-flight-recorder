@@ -36,7 +36,7 @@ It's a learning lab. It doesn't protect anything real, and every attack goes to 
 
 I go by Albeen here on GitHub. I'm 19, I live in Madrid, and I'm in my second year of ASIR (network systems administration).
 
-I came to Spain from my home country at 13 without proper Spanish or English. Bachillerato closed for me, so I took the FP route instead. SMR, an Erasmus placement abroad, then ASIR. That "plan B" turned out to be the road that opened my career.
+I moved to Spain from my home country when I was 13, without proper Spanish or English. Bachillerato wasn't an option for me, so I went down the vocational route (FP) instead: SMR, an Erasmus placement abroad, then ASIR. That "plan B" ended up being the road that opened my career.
 
 In May 2026 I did Deloitte's Technology Trainee program on the CyberSOC track. Over the summer I worked as an on site support engineer, installing Cisco and Meraki kit and supporting users across Madrid and Sevilla. In my own time I build SIEM labs with Elastic and Kibana: failed logon dashboards, Windows Event Log investigations, the basics of incident response.
 
