@@ -14,13 +14,14 @@ This README is two things at once. It's the story of a project I built. And it's
 2. [About me](#about-me)
 3. [Why I built it](#why-i-built-it)
 4. [How I learned it](#how-i-learned-it)
-5. [What it's for](#what-its-for)
-6. [What I built, in plain words](#what-i-built-in-plain-words)
-7. [How I built it, phase by phase](#how-i-built-it-phase-by-phase)
-8. [What I learned](#what-i-learned)
-9. [Run it yourself](#run-it-yourself)
-10. [Glossary](#glossary)
-11. [Repository layout, safety, what's next](#repository-layout)
+5. [Time taken](#time-taken)
+6. [What it's for](#what-its-for)
+7. [What I built, in plain words](#what-i-built-in-plain-words)
+8. [How I built it, phase by phase](#how-i-built-it-phase-by-phase)
+9. [What I learned](#what-i-learned)
+10. [Run it yourself](#run-it-yourself)
+11. [Glossary](#glossary)
+12. [Repository layout, safety, what's next](#repository-layout)
 
 ## What this project is
 
@@ -55,6 +56,21 @@ My first idea was to write my own WAF from scratch. I dropped it. That's like le
 I'm still learning, so I built this the way a lot of people learn now: with Claude Code, an AI coding assistant, as my tutor. It set up the lab around me (the containers, the test runner, the GitHub pipeline) and drafted the first rules and docs. I used all of that to learn the job. I ran the lab on my own laptop, wrote my own rules, broke them on purpose, and spotted a false positive nobody had planned for.
 
 Think of a driving instructor with dual controls. The instructor got the car onto the road; I'm the one learning to drive it. Rules 100080 and 100090 are my first solo laps, and [the tutorial](docs/tutorial-first-rule.md) shows every step.
+
+## Time taken
+
+About two weeks from idea to finished repo, but most of that was planning and thinking. The hands on build fit into one long day.
+
+| When | What happened |
+| --- | --- |
+| 21 Sep 2026 | I had the idea and wrote the first plan. I dropped "build my own WAF" for "run a real one". |
+| 22 to 30 Sep | I planned the build in the gaps between school and work: the tools, the phases, and what I wanted to prove. |
+| 1 Oct, morning | The lab went up: the WAF, the shop, the first rules, the tests and the GitHub pipeline. |
+| 1 Oct, afternoon | I ran it on my own laptop for the first time. 62 tests passed. |
+| 1 Oct, evening | I wrote my first two rules, broke them, fixed them and pushed my first commit. 70 tests passed. |
+| 3 to 7 Oct | I tidied up the docs and the screenshots. |
+
+If you're thinking of building something like this: getting the lab running is quick. Understanding why each rule fires is what takes time, and that part is still going.
 
 ## What it's for
 
