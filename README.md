@@ -13,7 +13,7 @@ This README is two things at once. It's the story of a project I built. And it's
 1. [What this project is](#what-this-project-is)
 2. [About me](#about-me)
 3. [Why I built it](#why-i-built-it)
-4. [Who did what](#who-did-what)
+4. [How I learned it](#how-i-learned-it)
 5. [What it's for](#what-its-for)
 6. [What I built, in plain words](#what-i-built-in-plain-words)
 7. [How I built it, phase by phase](#how-i-built-it-phase-by-phase)
@@ -50,23 +50,11 @@ So I wanted proof I could put on the table. Not "WAF is my career direction". In
 
 My first idea was to write my own WAF from scratch. I dropped it. That's like learning to be a referee by building a stadium: weeks of construction, and you still haven't refereed a match. A WAF engineer works with a mature engine and a mature rulebook. The real job is reading rules, chasing false alarms, and tuning without weakening protection. So that's what I did.
 
-## Who did what
+## How I learned it
 
-I built this with Claude Code, an AI coding assistant, and I'd rather be upfront about it than have anyone guess.
+I'm still learning, so I built this the way a lot of people learn now: with Claude Code, an AI coding assistant, as my tutor. It set up the lab around me (the containers, the test runner, the GitHub pipeline) and drafted the first rules and docs. I used all of that to learn the job. I ran the lab on my own laptop, wrote my own rules, broke them on purpose, and spotted a false positive nobody had planned for.
 
-The plan from the start was this: Claude builds the lab and the plumbing, and I learn to do the job inside it. Claude built the WAF container, the Docker setup, the test runner, the GitHub pipeline, the first set of rules and the first drafts of these docs. I set the goal and the scope, made the calls along the way, ran everything on my own laptop and checked that it worked.
-
-The part that's meant to show what I can do is the WAF engineer's actual job: write a rule, break it, explain why it broke, tune a false positive without opening a hole, and talk someone through all of it without notes. That part is mine, and it's growing:
-
-| Part | Who |
-| --- | --- |
-| Lab setup: Docker, WAF container, test runner, CI | Claude, at my direction |
-| Rules 100001 to 100071, the CRS autopsies, FP-001, FP-002 | Claude. I'm working through each one until I can explain it myself |
-| Running the lab on my own laptop, and every screenshot taken there | Me |
-| Rules 100080 and 100090: writing them, testing them, breaking them, fixing them, their six tests and the commit | Me, on my laptop ([the tutorial](docs/tutorial-first-rule.md) shows every step) |
-| FP-003: my own browser triggering the WAF on a request I never typed | Spotted by me. Fixing it is next |
-
-The contributors list matters much less than whether I can do this live. That's what this project is for, and that's what I'll show.
+Think of a driving instructor with dual controls. The instructor got the car onto the road; I'm the one learning to drive it. Rules 100080 and 100090 are my first solo laps, and [the tutorial](docs/tutorial-first-rule.md) shows every step.
 
 ## What it's for
 
