@@ -8,6 +8,8 @@ This README is two things at once. It's the story of a project I built. And it's
 
 ![OWASP Juice Shop running behind my WAF](docs/screenshots/01-juice-shop-through-waf.png)
 
+*The real Juice Shop, running behind my WAF.*
+
 ## Contents
 
 1. [What this project is](#what-this-project-is)
@@ -163,6 +165,8 @@ On my laptop (Windows, Docker Desktop), both containers up and the WAF healthy. 
 
 ![docker compose ps on my laptop](docs/screenshots/21-laptop-compose-ps-healthy.png)
 
+*Both containers up on my laptop, and the WAF healthy.*
+
 The first thing that went wrong: ModSecurity refused to start because some settings aren't allowed inside a single website's config, only at the server level. So the whole ModSecurity config loads from one file, [`modsecurity/main.conf`](modsecurity/main.conf), which also fixes the order everything loads in. That file is the first thing I'd tell anyone to read.
 
 ### Phase 1: the flight recorder
@@ -180,6 +184,8 @@ curl.exe -i "http://localhost:8080/rest/products/search?q=%27%20OR%201%3D1--"
 
 ![Blocked response with the transaction id header](docs/screenshots/10-blocked-response.png)
 
+*My WAF refusing the attack with a 403, and the tracking number in the X-WFR-Transaction header.*
+
 Then I learned the two modes a guard can work in:
 
 - **DetectionOnly** is like CCTV with nobody watching live: everything is recorded, but nobody gets stopped. Perfect for a trial run.
@@ -188,6 +194,8 @@ Then I learned the two modes a guard can work in:
 I sent the same attack in both modes:
 
 ![Same request in DetectionOnly and in On mode](docs/screenshots/09-detectiononly-vs-on.png)
+
+*The same attack twice: 200 when the guard only watches, 403 when it's On.*
 
 Same rules, same score. `200` (it got through) in DetectionOnly, `403` (refused) when enforcing. I wrote up one real log entry part by part: [how I read a transaction](docs/how-to-read-a-transaction.md).
 
@@ -254,9 +262,84 @@ Imagine a bouncer whose list says "no entry for JOHN". Someone walks up with an 
 | `t:normalizePath` | Clean up messy paths | `/./ftp` becomes `/ftp` |
 | `t:length` | Replace the text with how long it is | `apple` becomes `5` |
 
-I learned this one the hard way, on my own rule. Full walkthrough with my screenshots, including a second rule and my first commit: [**my first rules, step by step**](docs/tutorial-first-rule.md).
+I learned this one the hard way, on my own rule.
 
-![My own rule in VS Code](docs/screenshots/tutorial-07-rule-fixed.png)
+#### My first rules, on my laptop
+
+![My first rule in VS Code](docs/screenshots/tutorial-01-rule-file.png)
+
+*My first rule, 100080, in VS Code. Every part of it is explained in the comments above it.*
+
+I pretend to be my own scanner. `-A` sets the User-Agent, so it's basically a fake ID card:
+
+```powershell
+curl.exe -i -A "Albeen-Scanner/1.0" http://localhost:8080/
+# curl.exe sends a request from the command line, like a browser without the window.
+# -i shows the response headers too. -A sets the User-Agent: the name on the ID card.
+```
+
+`403 Forbidden` and **WFR-BLOCKED**.
+
+![My scanner marker blocked](docs/screenshots/tutorial-03-scanner-blocked.png)
+
+*My fake scanner refused at the door.*
+
+Same scanner name, lowercase:
+
+```powershell
+curl.exe -s -o NUL -w "%{http_code}\n" -A "albeen-scanner/1.0" http://localhost:8080/
+# Same fake ID card, but written in lowercase
+# -s = quiet, -o NUL = throw the page away, -w = print only the status code
+```
+
+`200`. It walked straight in. `@contains` cares about upper and lowercase, and `t:none` means nothing tidies the input first. An attacker only has to change one letter.
+
+![Lowercase gets straight past my rule](docs/screenshots/tutorial-06-lowercase-gets-in.png)
+
+*One lowercase letter, and my rule let it straight in.*
+
+Two small edits: `t:none,` becomes `t:none,t:lowercase,`, and `@contains Albeen-Scanner` becomes `@contains albeen-scanner`. Both 403 now.
+
+![My fixed rule, with t:lowercase](docs/screenshots/tutorial-07-rule-fixed.png)
+
+*The fix: t:lowercase tidies the name before checking it.*
+
+![The lowercase trick blocked now](docs/screenshots/tutorial-08-lowercase-blocked.png)
+
+*The lowercase trick blocked now.*
+
+My first rule looked at one thing. Real rules often need two things to be true at once, so for my second rule I wanted to learn a **chain**.
+
+The idea, in everyday terms: a customer at the counter asks for "apple juice". Someone who hands over a 300 word order slip isn't shopping. They're testing what the kitchen does with weird input. Attack tools do exactly that: they stuff long, strange text into search boxes to see what breaks. So rule **100090** blocks product searches longer than 100 characters, and only on the search page.
+
+```powershell
+$long = "a" * 120
+# Make a text of 120 letter a's. PowerShell can multiply text like that.
+curl.exe -s -o NUL -w "%{http_code}\n" "http://localhost:8080/rest/products/search?q=apple"
+# A normal search: expect 200
+curl.exe -s -o NUL -w "%{http_code}\n" "http://localhost:8080/rest/products/search?q=$long"
+# A 120 letter search: expect 403
+curl.exe -s -o NUL -w "%{http_code}\n" "http://localhost:8080/api/Products?q=$long"
+# The same long text on a different page: expect NOT 403, because the chain only covers the search page
+```
+
+![200, 403, 200](docs/screenshots/tutorial-10-second-rule-tests.png)
+
+*A normal search gets 200, the 120 letter one gets 403, and the same long text on another page gets 200.*
+
+Then I broke it on purpose. I took `t:length` out of the second condition. The 120 letter search now gets a **200**. Without `t:length`, the guard compares the text "aaaa..." with the number 100. That makes no sense, so it never matches, and the rule silently does nothing. No error, no warning. Just a guard who stopped working.
+
+![The broken rule lets the long search in](docs/screenshots/tutorial-13-second-rule-broken-result.png)
+
+*Without t:length, my rule quietly stopped working.*
+
+`t:length` back in, `docker compose restart waf`, and the long search is a **403** again.
+
+![403 again](docs/screenshots/tutorial-15-second-rule-fixed-result.png)
+
+*t:length back in, and the long search is blocked again.*
+
+The lesson I took from this one: a broken rule doesn't always crash. Sometimes it just quietly stops matching. Every step, including the restarts and the audit log, is in [my first rules, step by step](docs/tutorial-first-rule.md).
 
 #### The rules I wrote
 
@@ -278,15 +361,21 @@ Why block `/ftp`? With the guard in DetectionOnly, this is what Juice Shop shows
 
 ![Juice Shop ftp listing with the WAF in DetectionOnly](docs/screenshots/08-ftp-listing-detectiononly.png)
 
+*Juice Shop's /ftp folder, open to anyone while the WAF only watches.*
+
 Backups, a password database, an encrypted announcement. A filing cabinet left open in the lobby. With my rule enforcing, the same address gets this:
 
 ![ftp blocked by my rule](docs/screenshots/07-ftp-blocked.png)
+
+*The same address, blocked by my rule.*
 
 Fixing it in the WAF without touching the app is called a **virtual patch**: you can't fix the cabinet today, so you put a guard in front of it.
 
 Every rule has tests for what it must block and what it must let through:
 
 ![My rules under test](docs/screenshots/11-custom-rule-scenarios.png)
+
+*Every rule tested both ways: what it must block and what it must let through.*
 
 Details for every rule: [ModSecurity notes](docs/modsecurity-notes.md). The rule files explain each choice in their comments: [`modsecurity/custom-rules/`](modsecurity/custom-rules/).
 
@@ -313,13 +402,25 @@ docker compose --profile test run --rm tests
 
 ![The whole suite](docs/screenshots/19-pytest.png)
 
+*The whole set of drills, run in the tests container.*
+
 And on my laptop, against the real Juice Shop in Docker. 62 passed, including the check that Juice Shop can't be reached any way except through the WAF:
 
 ![62 passed on my laptop](docs/screenshots/22-laptop-62-passed.png)
 
+*62 passed on my laptop, against the real Juice Shop.*
+
 After I added my own two rules and six tests of my own: 70 passed.
 
 ![70 passed after my own rules](docs/screenshots/tutorial-16-70-passed.png)
+
+*70 passed after I added my own two rules and their tests.*
+
+Then my first commit to the project:
+
+![My commit on GitHub](docs/screenshots/tutorial-17-my-commit-on-github.png)
+
+*My first commit: my two rules and their six tests.*
 
 On top of that, **GitHub Actions** (a robot that runs on GitHub's computers) rebuilds the whole lab from scratch and reruns every drill each time I push a change. That's the green tick at the top of this page.
 
@@ -333,6 +434,8 @@ docker compose --profile test run --rm tests python tools/summarize_audit.py -n 
 
 ![One line per transaction](docs/screenshots/18-audit-summary.png)
 
+*The flight recorder, one line per request: BLOCK or allow, the score and the rules that fired.*
+
 ### Phase 4: the professional rulebook, and the attacks it stops
 
 Then I loaded CRS, the rulebook written by OWASP experts, and attacked the shop with classic test strings. Here's what each attack means in plain words:
@@ -345,21 +448,29 @@ Then I loaded CRS, the rulebook written by OWASP experts, and attacked the shop 
 | **Command injection** | Ordering "a pizza; and also give me the keys to the shop" | `x; cat /etc/passwd`, trying to sneak a system command in |
 | **Scanner** | Someone walking in wearing a "burglar" name tag | A `User-Agent` saying `sqlmap`, a well known attack tool |
 
+I turned every attack in that table into a test:
+
+![CRS controls](docs/screenshots/13-crs-controls.png)
+
+*Every attack from the table, blocked by CRS.*
+
 All blocked. A normal search, of course, goes straight through:
 
 ![Product search with a normal term](docs/screenshots/02-normal-search-allowed.png)
+
+*A normal search for apple goes straight through.*
 
 The famous Juice Shop admin login bypass, `' OR 1=1--` as the email, doesn't log anyone in anymore. The guard stops it before Juice Shop ever sees it:
 
 ![Login bypass attempt](docs/screenshots/04-login-sqli-bypass-blocked.png)
 
-![The same string straight against the search](docs/screenshots/03-sqli-search-blocked.png)
+*The WAF blocking my SQL injection on the login page.*
 
 Same thing from my own browser, the first time I ran the lab on my laptop:
 
 ![SQL injection blocked in my browser](docs/screenshots/20-laptop-sqli-blocked-in-browser.png)
 
-![CRS controls](docs/screenshots/13-crs-controls.png)
+*The same attack blocked in my own browser, on my laptop.*
 
 CRS has a strictness dial called the **paranoia level**, from 1 (relaxed, few false alarms) to 4 (suspicious of everyone). I used level 1.
 
@@ -379,6 +490,8 @@ Seeing a 403 isn't the same as understanding it. So I picked five CRS rules and 
 
 ![Anomaly scoring scenarios](docs/screenshots/12-anomaly-scoring.png)
 
+*Penalty points adding up: one oddity stays under 5, two together cross it.*
+
 - Visiting by bare IP address alone scores 3. Logged, allowed.
 - Add an empty browser name (2 more) and it reaches 5. Blocked. Two small oddities add up.
 - My own points rule in phase 1 got wiped, because CRS resets everyone's points to zero right after. The same rule in phase 2 blocks. Same rule, different moment, completely different result.
@@ -396,6 +509,8 @@ Remove-Item Env:WFR_INBOUND_THRESHOLD; docker compose up -d
 
 ![What gets through at threshold 10](docs/screenshots/14-threshold-10.png)
 
+*With the limit at 10, these attacks walk straight through.*
+
 The login bypass, the search SQL injection and the sqlmap scanner all walk straight through. Lots of real attacks trip exactly one serious rule: 5 points. Double the limit and the guard goes blind to all of them, without any warning. Full write up: [anomaly scoring experiment](docs/anomaly-scoring-experiment.md).
 
 ### Phase 6: a real false alarm, fixed narrowly
@@ -412,6 +527,8 @@ Blocked. CRS 932235 sees `=` plus `mail` (a real Unix command) plus a space, and
 
 ![FP-001 before the fix](docs/screenshots/15-fp001-before.png)
 
+*A customer's newsletter link, blocked as command injection.*
+
 The lazy fixes were right there:
 
 - Delete the rule. (Rip the alarm out of the house.)
@@ -422,6 +539,8 @@ Each one opens a hole I'd just measured. So I wrote one **exclusion**: an except
 
 ![FP-001 after the fix, with its controls](docs/screenshots/16-fp001-after.png)
 
+*After my fix: the comment goes through, and all four controls still hold.*
+
 There are two kinds of exception, and the difference matters:
 
 - A **runtime exclusion** is a note for one visitor at one door: "for this request, on this page, skip that one check". That's what I used.
@@ -430,6 +549,8 @@ There are two kinds of exception, and the difference matters:
 Two more tuning cases came out of the build. Out of the box, CRS blocks Juice Shop's own requests to change or remove things in your basket, because it only allows the most common methods. The fix there was a CRS setting, not an exception. And my own rule 100050 blocked a shopper searching for "cough drops":
 
 ![Lab F before and after](docs/screenshots/17-labf-before-after.png)
+
+*My rule 100050 blocking a search for cough drops, then letting it through after my fix.*
 
 Everything is in the [tuning journal](docs/tuning-journal/): [FP-001](docs/tuning-journal/FP-001.md), [FP-002](docs/tuning-journal/FP-002.md), [LAB-F](docs/tuning-journal/LAB-F.md).
 
