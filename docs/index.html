@@ -1,0 +1,1972 @@
+<!-- WAF Flight Recorder · Copyright (c) 2026 Albeen (albeen-sknight) -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="generator" content="WFR-Showcase">
+<title id="page-title">WAF Flight Recorder | Request, rule, proof</title>
+<meta name="description" content="A real ModSecurity lab in front of OWASP Juice Shop, with custom rules, audit evidence, false positive fixes and regression tests.">
+<meta name="theme-color" content="#101316">
+<meta property="og:type" content="website">
+<meta property="og:title" content="WAF Flight Recorder">
+<meta property="og:description" content="A real web application firewall, its rules, and the evidence behind each decision.">
+<meta property="og:url" content="https://albeen-sknight.github.io/waf-flight-recorder/">
+<meta property="og:image" content="https://albeen-sknight.github.io/waf-flight-recorder/screenshots/01-juice-shop-through-waf.png">
+<meta property="og:image:alt" content="OWASP Juice Shop running behind the WAF">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="WAF Flight Recorder">
+<meta name="twitter:description" content="A real web application firewall, its rules, and the evidence behind each decision.">
+<meta name="twitter:image" content="https://albeen-sknight.github.io/waf-flight-recorder/screenshots/01-juice-shop-through-waf.png">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='6' y='13' width='52' height='40' rx='7' fill='%23ff7137'/%3E%3Cpath d='M14 31h8l5-7 7 15 6-9h10' fill='none' stroke='%23101316' stroke-width='3'/%3E%3Ccircle cx='48' cy='45' r='3' fill='%23101316'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#101316;--panel:#171c20;--panel-hi:#20272c;--line:#344047;--ink:#f1f4f5;--muted:#b0bac0;
+  --accent:#ff7137;--accent-ink:#ff9a6c;--accent-text:#1b0a03;--glow:rgba(255,113,55,.14);
+  --allowed:#50d890;--allowed-ink:#9af0bf;--blocked:#ff625d;--blocked-ink:#ffaaa4;--logged:#f3c24f;--logged-ink:#ffe19a;
+  --terminal:#090c0e;--terminal-ink:#e0e7e9;--shadow:0 16px 44px rgba(0,0,0,.24);--max:1060px;
+}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){
+  color-scheme:light;
+  --bg:#f6f4ef;--panel:#fff;--panel-hi:#f0ede6;--line:#d4d0c8;--ink:#171a1c;--muted:#4b545a;
+  --accent:#e65314;--accent-ink:#a83b0c;--accent-text:#171a1c;--glow:rgba(230,83,20,.10);
+  --allowed:#14723b;--allowed-ink:#0d5e31;--blocked:#b4252b;--blocked-ink:#9b171d;--logged:#805500;--logged-ink:#714900;
+  --terminal:#111619;--terminal-ink:#edf2f3;--shadow:0 12px 32px rgba(29,25,17,.09);
+}}
+:root[data-theme="light"]{
+  color-scheme:light;
+  --bg:#f6f4ef;--panel:#fff;--panel-hi:#f0ede6;--line:#d4d0c8;--ink:#171a1c;--muted:#4b545a;
+  --accent:#e65314;--accent-ink:#a83b0c;--accent-text:#171a1c;--glow:rgba(230,83,20,.10);
+  --allowed:#14723b;--allowed-ink:#0d5e31;--blocked:#b4252b;--blocked-ink:#9b171d;--logged:#805500;--logged-ink:#714900;
+  --terminal:#111619;--terminal-ink:#edf2f3;--shadow:0 12px 32px rgba(29,25,17,.09);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:24px}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.62 Archivo,system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+button,input{font:inherit}
+button{color:inherit}
+a{color:var(--accent-ink);text-underline-offset:3px}
+a:hover{color:var(--ink)}
+code,pre,.mono{font-family:"IBM Plex Mono",ui-monospace,Consolas,monospace}
+code{overflow-wrap:anywhere}
+img{display:block;max-width:100%;height:auto}
+h1,h2,h3,h4,p{margin-top:0}
+h1,h2,h3,h4{line-height:1.13;letter-spacing:-.025em}
+h1{font-size:clamp(2.7rem,7.5vw,5.7rem);max-width:780px;margin-bottom:18px}
+h2{font-size:clamp(2rem,4.5vw,3.3rem);margin-bottom:18px}
+h3{font-size:1.35rem;margin-bottom:10px}
+p{margin-bottom:16px}
+section{padding:78px 20px;border-top:1px solid var(--line)}
+.wrap{width:min(100%,var(--max));margin:0 auto}
+.eyebrow,.kicker,.micro-label{font:600 .77rem/1.4 "IBM Plex Mono",monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--accent-ink)}
+.lead{max-width:760px;font-size:clamp(1.1rem,2.2vw,1.34rem);color:var(--muted)}
+.muted{color:var(--muted)}
+.mono{font-size:.9em}
+.skip{position:fixed;left:12px;top:-80px;z-index:30;padding:10px 14px;background:var(--accent);color:var(--accent-text);border-radius:8px}
+.skip:focus{top:12px}
+:focus-visible{outline:3px solid var(--accent-ink);outline-offset:3px;border-radius:5px}
+.utility{position:fixed;z-index:20;right:12px;top:12px;display:flex;gap:8px}
+.switch,.theme{display:flex;align-items:center;min-height:44px;background:var(--panel);border:1px solid var(--line);border-radius:11px;box-shadow:var(--shadow);overflow:hidden}
+.switch button,.theme{min-width:44px;min-height:44px;border:0;background:transparent;cursor:pointer;font:600 .8rem "IBM Plex Mono",monospace}
+.switch button[aria-pressed="true"]{background:var(--accent);color:var(--accent-text)}
+.theme{padding:0 12px;gap:8px;color:var(--ink)}
+.theme-mark{font-size:1rem;color:var(--accent-ink)}
+.btn,.link-btn{min-height:48px;display:inline-flex;justify-content:center;align-items:center;gap:9px;padding:11px 17px;border:1px solid var(--line);border-radius:9px;text-decoration:none;font-weight:700;cursor:pointer;background:var(--panel)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-text)}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.secondary:hover,.link-btn:hover{border-color:var(--accent)}
+.row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:15px;box-shadow:var(--shadow)}
+.tag{display:inline-flex;align-items:center;min-height:28px;padding:3px 9px;border:1px solid var(--line);border-radius:99px;color:var(--muted);font:600 .72rem "IBM Plex Mono",monospace}
+.status{display:inline-flex;align-items:center;justify-content:center;min-height:28px;padding:3px 9px;border-radius:99px;font:700 .72rem "IBM Plex Mono",monospace;white-space:nowrap}
+.status.allowed{color:var(--allowed-ink);background:color-mix(in srgb,var(--allowed) 14%,transparent);border:1px solid color-mix(in srgb,var(--allowed) 46%,transparent)}
+.status.blocked{color:var(--blocked-ink);background:color-mix(in srgb,var(--blocked) 13%,transparent);border:1px solid color-mix(in srgb,var(--blocked) 48%,transparent)}
+.status.logged{color:var(--logged-ink);background:color-mix(in srgb,var(--logged) 14%,transparent);border:1px solid color-mix(in srgb,var(--logged) 48%,transparent)}
+.term{border:0;border-bottom:1px dotted var(--accent-ink);padding:0;background:transparent;color:inherit;cursor:help}
+.term{position:relative}
+.term:hover,.term:focus-visible{color:var(--accent-ink)}
+.term[data-tip]::after{content:attr(data-tip);position:absolute;z-index:10;max-width:270px;opacity:0;pointer-events:none;transform:translateY(8px);padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel-hi);color:var(--ink);font:400 .78rem/1.4 Archivo,sans-serif;box-shadow:var(--shadow)}
+.term:hover::after,.term:focus-visible::after{opacity:1;transform:translateY(3px)}
+.sr{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+
+.hero{position:relative;min-height:760px;padding:84px 20px 30px;overflow:hidden;background:radial-gradient(850px 540px at 76% 35%,var(--glow),transparent 68%),linear-gradient(180deg,var(--bg),var(--bg))}
+.hero::before{content:"";position:absolute;inset:0;background-image:linear-gradient(to right,color-mix(in srgb,var(--line) 22%,transparent) 1px,transparent 1px),linear-gradient(to bottom,color-mix(in srgb,var(--line) 22%,transparent) 1px,transparent 1px);background-size:52px 52px;mask-image:linear-gradient(to bottom,black,transparent 74%);pointer-events:none}
+.hero-shell{position:relative;width:min(100%,var(--max));margin:0 auto}
+.brand{display:flex;align-items:center;gap:11px;margin-bottom:44px;font:600 .8rem "IBM Plex Mono",monospace;letter-spacing:.06em;text-transform:uppercase}
+.brand svg{width:38px;height:38px;flex:none}
+.brand span{color:var(--muted)}
+.hero-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:30px}
+.hero-copy{position:relative;z-index:2;max-width:790px}
+.hero-copy .eyebrow{margin-bottom:16px}
+.hook{max-width:760px;font-size:clamp(1.1rem,2.4vw,1.55rem);line-height:1.46;color:var(--muted)}
+.proof-line{margin:18px 0 22px;padding-left:13px;border-left:3px solid var(--accent);font-size:.96rem}
+.proof-line strong{color:var(--ink)}
+.hero-actions{margin:25px 0 20px}
+.github-link{display:inline-flex;align-items:center;min-height:44px;gap:8px;font:600 .84rem "IBM Plex Mono",monospace}
+.ci-line{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:18px}
+.ci-line>a{display:inline-flex;align-items:center;min-height:44px}
+.ci-line img{width:116px;height:22px;object-fit:contain}
+.ci-line span{color:var(--muted);font-size:.82rem}
+.scene-panel{margin-top:36px;background:linear-gradient(180deg,color-mix(in srgb,var(--panel) 88%,transparent),var(--panel));border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:var(--shadow)}
+.scene-svg{width:100%;height:auto;display:block}
+.scene-svg .flow{fill:none;stroke:var(--line);stroke-width:2;stroke-dasharray:7 9}
+.scene-svg .scene-label{font:600 13px "IBM Plex Mono",monospace;fill:var(--muted);letter-spacing:1px}
+.scene-svg .gate{fill:var(--panel-hi);stroke:var(--accent);stroke-width:2}
+.scene-svg .gate-bar{stroke:var(--accent);stroke-width:7}
+.scene-svg .shop{fill:var(--panel-hi);stroke:var(--line);stroke-width:2}
+.scene-svg .shop-light{fill:var(--accent);opacity:.9}
+.scene-svg .packet-box{fill:var(--terminal);stroke:var(--line);stroke-width:1.5}
+.scene-svg .packet-method{font:600 11px "IBM Plex Mono",monospace;fill:var(--accent-ink)}
+.scene-svg .packet-path{font:500 11px "IBM Plex Mono",monospace;fill:var(--terminal-ink)}
+.scene-svg .packet-label{font:500 10px Archivo,sans-serif;fill:var(--muted)}
+.scene-svg .stamp-ok{fill:var(--allowed)}
+.scene-svg .stamp-no{fill:var(--blocked)}
+.scene-svg .stamp-text{font:700 10px "IBM Plex Mono",monospace;fill:#101316}
+.scene-svg .rec-dot{fill:var(--accent)}
+.packet-one{animation:glide-one 7s linear infinite}
+.packet-two{animation:glide-two 8s linear infinite 1.2s}
+.packet-three{animation:glide-three 8s linear infinite 2.4s}
+@keyframes glide-one{0%,8%{transform:translateX(0)}40%,57%{transform:translateX(435px)}100%{transform:translateX(770px)}}
+@keyframes glide-two{0%,7%{transform:translateX(0)}40%,58%{transform:translateX(435px)}80%,100%{transform:translateX(90px)}}
+@keyframes glide-three{0%,10%{transform:translateX(0)}43%,58%{transform:translateX(435px)}82%,100%{transform:translateX(770px)}}
+.frozen{display:none}
+.mobile-requests{display:none}
+.tape-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;border-top:1px solid var(--line);background:#0a0d0f;color:#bdc8cc;font:600 .7rem "IBM Plex Mono",monospace}
+.rec{display:inline-flex;align-items:center;gap:7px;color:#ff8754}
+.rec::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 4px rgba(255,113,55,.14);animation:pulse 1.3s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.28;box-shadow:0 0 0 7px rgba(255,113,55,.02)}}
+.tape{height:130px;overflow:auto;background:#090c0e;color:var(--terminal-ink);padding:11px 14px;scrollbar-color:#53636b #0a0d0f}
+.tape-line{display:block;min-width:760px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.06);font:500 .69rem/1.45 "IBM Plex Mono",monospace;white-space:nowrap}
+.tape-line .block-word{color:#ff817a}.tape-line .allow-word{color:#77e9a6}
+.tape-note{padding:9px 14px;border-top:1px solid #20282d;background:#0a0d0f;color:#a8b3b7;font-size:.74rem}
+
+.triad{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px;margin-top:32px}
+.triad-card{padding:23px;min-height:240px}
+.term-rail{display:flex;gap:9px;flex-wrap:wrap;margin:22px 0 0}
+.term-rail .term{min-height:44px;padding:6px 9px;border:1px dotted var(--line);border-radius:8px;background:var(--panel);font-size:.78rem}
+.icon-box{width:58px;height:58px;display:grid;place-items:center;margin-bottom:20px;border-radius:14px;background:var(--panel-hi);color:var(--accent-ink)}
+.icon-box svg{width:38px;height:38px}
+.question-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-top:30px}
+.question{position:relative;min-height:160px;padding:16px 14px;background:var(--panel);border:1px solid var(--line);border-radius:12px;transition:border-color .2s,transform .2s,box-shadow .2s}
+.question .q-no{display:block;margin-bottom:15px;color:var(--accent-ink);font:600 .76rem "IBM Plex Mono",monospace}
+.question.is-answered{border-color:var(--accent);box-shadow:0 0 0 2px var(--glow);transform:translateY(-3px)}
+.question h3{font-size:1rem;margin:0}
+.question.is-answered .q-no::after{content:"  ✓";color:var(--allowed-ink)}
+
+.anatomy-grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(280px,.9fr);gap:18px;margin-top:30px;align-items:start}
+.order-slip{padding:22px;position:relative;background:var(--panel);border:1px solid var(--line);border-radius:14px}
+.order-slip::before{content:"";position:absolute;inset:10px;border:1px dashed var(--line);border-radius:9px;pointer-events:none}
+.slip-head{position:relative;display:flex;justify-content:space-between;gap:12px;padding-bottom:14px;border-bottom:1px solid var(--line);font:600 .75rem "IBM Plex Mono",monospace}
+.slip-items{position:relative;display:grid;gap:8px;margin-top:14px}
+.anatomy-part{width:100%;min-height:48px;display:grid;grid-template-columns:110px minmax(0,1fr);align-items:center;gap:8px;text-align:left;padding:8px 10px;background:var(--panel-hi);border:1px solid transparent;border-radius:8px;cursor:pointer}
+.anatomy-part:hover,.anatomy-part[aria-pressed="true"]{border-color:var(--accent)}
+.anatomy-part b{font:600 .73rem "IBM Plex Mono",monospace;color:var(--accent-ink)}
+.anatomy-part code{font-size:.74rem;color:var(--ink);word-break:break-word}
+.anatomy-explain{padding:22px}
+.anatomy-explain .micro-label{margin-bottom:10px}
+.code-sample{display:block;margin:16px 0;padding:13px;border-radius:9px;background:var(--terminal);color:var(--terminal-ink);overflow:auto}
+.code-sample code{font-size:.76rem;white-space:pre}
+.status-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}
+.status-chip{display:inline-grid;gap:2px;min-width:88px;padding:8px 10px;background:var(--panel-hi);border:1px solid var(--line);border-radius:9px}
+.status-chip b{font:700 .85rem "IBM Plex Mono",monospace}
+.status-chip span{font-size:.74rem;color:var(--muted)}
+
+.architecture{margin-top:30px;padding:18px;background:var(--panel);border:1px solid var(--line);border-radius:15px;overflow:hidden}
+.architecture svg{display:block;width:100%;height:auto}
+.architecture svg text{font-family:"IBM Plex Mono",monospace}
+.arch-layers{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:16px}
+.layer{padding:16px;border-left:3px solid var(--accent);background:var(--panel);border-radius:5px 11px 11px 5px}
+.layer .micro-label{display:block;margin-bottom:6px}
+.docker-note{margin-top:17px;color:var(--muted)}
+
+.console-wrap{padding:18px;background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow)}
+.console-top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:4px 4px 15px;border-bottom:1px solid var(--line)}
+.console-top p{margin:0;color:var(--muted);font-size:.85rem}
+.console-layout{display:grid;grid-template-columns:minmax(0,.95fr) minmax(0,1.25fr);gap:14px;padding-top:14px}
+.record-list{display:grid;align-content:start;gap:7px;max-height:760px;overflow:auto;padding-right:5px}
+.record-row{width:100%;display:grid;grid-template-columns:1fr auto;gap:7px 10px;align-items:center;padding:12px 11px;text-align:left;background:var(--bg);border:1px solid var(--line);border-radius:10px;cursor:pointer}
+.record-row:hover,.record-row[aria-pressed="true"]{border-color:var(--accent);background:var(--panel-hi)}
+.record-name{font-weight:700;font-size:.83rem}
+.record-line{grid-column:1/-1;font:500 .67rem/1.5 "IBM Plex Mono",monospace;overflow-wrap:anywhere;color:var(--muted)}
+.record-meta{font:500 .64rem "IBM Plex Mono",monospace;color:var(--muted);overflow-wrap:anywhere}
+.inspector{min-width:0;padding:18px;background:var(--bg);border:1px solid var(--line);border-radius:12px}
+.inspector-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;padding-bottom:14px;border-bottom:1px solid var(--line)}
+.inspector-head h3{margin:0 0 5px;font-size:1.17rem}
+.inspector-head p{margin:0;color:var(--muted);font-size:.75rem}
+.answers{display:grid;gap:12px;margin-top:14px}
+.answer{padding:13px;background:var(--panel);border:1px solid var(--line);border-radius:9px}
+.answer h4{margin:0 0 7px;color:var(--accent-ink);font:600 .75rem/1.4 "IBM Plex Mono",monospace;letter-spacing:.03em}
+.answer p{margin:0;font-size:.87rem}
+.answer code{display:inline-block;max-width:100%;margin-top:7px;padding:6px 8px;border-radius:6px;background:var(--terminal);color:var(--terminal-ink);font-size:.74rem;overflow-wrap:anywhere}
+.rule-matches{display:grid;gap:7px;margin:0;padding:0;list-style:none}
+.rule-matches li{display:grid;grid-template-columns:auto 1fr;gap:9px;align-items:start;font-size:.82rem}
+.rule-matches code{margin:0}
+.trace{display:grid;gap:7px;margin-top:10px}
+.trace-line{font:500 .7rem/1.55 "IBM Plex Mono",monospace;overflow-wrap:anywhere}
+.compare{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:11px}
+.compare button{min-height:44px;padding:8px 12px;border:1px solid var(--line);border-radius:7px;background:var(--panel-hi);cursor:pointer;font:600 .73rem "IBM Plex Mono",monospace}
+.compare button[aria-pressed="true"]{border-color:var(--accent);color:var(--accent-ink)}
+.sample-source{display:inline-flex;min-height:44px;align-items:center;margin-top:8px;font-size:.76rem}
+.no-fix{color:var(--muted);font-size:.8rem}
+
+.stepper{display:grid;gap:18px;margin-top:32px}
+.phase{position:relative;display:grid;grid-template-columns:76px minmax(0,1fr);gap:15px}
+.phase-number{display:grid;justify-items:center;align-content:start;gap:8px}
+.phase-number b{width:48px;height:48px;display:grid;place-items:center;background:var(--accent);color:var(--accent-text);border-radius:50%;font:700 1.05rem "IBM Plex Mono",monospace}
+.phase:not(:last-child) .phase-number::after{content:"";display:block;width:2px;height:calc(100% - 52px);min-height:70px;background:var(--line)}
+.phase-content{padding:22px;margin-bottom:5px}
+.phase-content h3{margin:0 0 12px}
+.phase-content p{margin-bottom:10px}
+.phase-facts{display:grid;gap:6px;margin:12px 0 18px;padding-left:20px}
+.phase-facts li::marker{color:var(--accent)}
+.shots{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr));gap:10px;margin-top:14px}
+.shot{width:100%;height:100%;display:flex;flex-direction:column;gap:7px;padding:8px;background:var(--panel-hi);border:1px solid var(--line);border-radius:10px;text-align:left;cursor:zoom-in}
+.shot img{width:100%;height:190px;object-fit:contain;background:#fff;border-radius:6px}
+.shot span{font-size:.72rem;line-height:1.4;color:var(--muted)}
+.shot:hover{border-color:var(--accent)}
+.yaml-card,.terminal{margin:14px 0;padding:14px 16px;background:var(--terminal);color:var(--terminal-ink);border:1px solid #29333a;border-radius:10px;overflow:auto}
+.yaml-card pre,.terminal pre{margin:0;min-width:0;font:500 .75rem/1.7 "IBM Plex Mono",monospace;white-space:pre-wrap;overflow-wrap:anywhere}
+.yaml-card .safe-marker{color:#78e6a4}
+.attack-table{width:100%;margin-top:16px;border-collapse:collapse;text-align:left}
+.attack-table th,.attack-table td{padding:12px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+.attack-table th{color:var(--accent-ink);font:600 .72rem "IBM Plex Mono",monospace;text-transform:uppercase}
+.attack-table td{font-size:.84rem}
+.attack-table td:last-child{color:var(--allowed-ink);font-weight:700}
+.autopsy-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:9px;margin-top:16px}
+.autopsy{min-height:94px;padding:13px;border:1px solid var(--line);border-radius:10px;background:var(--panel-hi);text-decoration:none}
+.autopsy b{display:block;margin-bottom:6px;color:var(--accent-ink);font:600 .84rem "IBM Plex Mono",monospace}
+.autopsy span{font-size:.78rem;color:var(--ink)}
+.crossed{text-decoration:line-through;text-decoration-color:var(--blocked);text-decoration-thickness:2px;color:var(--muted)}
+.controls-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:14px}
+.control-note{padding:12px;border:1px solid var(--line);border-radius:9px;background:var(--panel-hi);font-size:.83rem}
+
+.rule-layout{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(250px,.7fr);gap:16px;margin-top:30px}
+.rule-layout>*{min-width:0}
+.rule-code-wrap{min-width:0;max-width:100%;padding:18px;background:var(--terminal);border:1px solid #344047;border-radius:13px;overflow:auto}
+.rule-code{display:block;min-width:740px;color:var(--terminal-ink);font:500 .85rem/1.8 "IBM Plex Mono",monospace;white-space:nowrap}
+.rule-part{min-height:44px;padding:3px 2px;border:0;border-radius:3px;background:transparent;color:inherit;font:inherit;cursor:pointer}
+.rule-part:hover,.rule-part[aria-pressed="true"]{background:rgba(255,113,55,.19);color:#ffc0a3}
+.rule-info{padding:20px}
+.rule-info p{margin:0}
+.rule-demo{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:16px}
+.rule-demo button{min-height:44px;padding:9px 13px;border:1px solid var(--line);border-radius:8px;background:var(--panel);cursor:pointer}
+.rule-demo button[aria-pressed="true"]{border-color:var(--accent);color:var(--accent-ink)}
+.rule-result{display:grid;gap:6px;min-width:180px;padding:11px;border-radius:9px;background:var(--panel-hi);font:500 .74rem/1.5 "IBM Plex Mono",monospace}
+
+.simulator{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.9fr);gap:17px;margin-top:28px}
+.sim-controls,.sim-readout{padding:20px}
+.checks{display:grid;gap:9px;margin:13px 0 19px}
+.check-line{min-height:48px;display:grid;grid-template-columns:22px 1fr auto;gap:10px;align-items:center;padding:10px;background:var(--panel-hi);border:1px solid var(--line);border-radius:9px}
+.check-line input{width:20px;height:20px;accent-color:var(--accent)}
+.check-line span{font-size:.87rem}
+.check-line b{font:600 .75rem "IBM Plex Mono",monospace}
+.slider-head{display:flex;justify-content:space-between;gap:10px;margin:17px 0 8px;font-weight:700}
+.slider-head output{font:700 1rem "IBM Plex Mono",monospace;color:var(--accent-ink)}
+input[type="range"]{width:100%;min-height:44px;accent-color:var(--accent);cursor:pointer}
+.range-stops{display:flex;justify-content:space-between;color:var(--muted);font:600 .75rem "IBM Plex Mono",monospace}
+.score-visual{height:18px;margin:20px 0 13px;background:var(--panel-hi);border:1px solid var(--line);border-radius:99px;overflow:hidden}
+.score-fill{height:100%;width:0;background:var(--logged);transition:width .25s ease,background .25s ease}
+.score-fill.is-blocked{background:var(--blocked)}
+.sim-decision{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:12px 0;font-size:.95rem}
+.threshold-reveal{padding:12px;border-left:3px solid var(--blocked);background:var(--panel-hi);font-size:.86rem}
+.threshold-reveal[hidden]{display:none}
+.lesson-callout{margin-top:26px;padding:22px;border-left:5px solid var(--accent);background:var(--panel);font-size:clamp(1.28rem,3vw,2rem);font-weight:700;line-height:1.3}
+
+.rule-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:11px;margin-top:28px}
+.rule-card{padding:16px}
+.rule-card .rule-id{display:block;margin-bottom:9px;color:var(--accent-ink);font:600 .8rem "IBM Plex Mono",monospace}
+.rule-card p{margin:7px 0;font-size:.83rem}
+.rule-card .lesson{color:var(--muted)}
+.lesson-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px;margin-top:28px}
+.lesson-card{padding:18px}
+.lesson-card b{display:block;margin-bottom:8px;color:var(--accent-ink)}
+.lesson-card p{margin:0;color:var(--muted);font-size:.86rem}
+.timeline{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:0;margin-top:30px}
+.timepoint{position:relative;padding:15px 14px 8px 20px;border-top:2px solid var(--line)}
+.timepoint::before{content:"";position:absolute;width:12px;height:12px;left:0;top:-7px;border-radius:50%;background:var(--accent)}
+.timepoint time{display:block;margin-bottom:8px;color:var(--accent-ink);font:600 .72rem "IBM Plex Mono",monospace}
+.timepoint p{margin:0;color:var(--muted);font-size:.82rem}
+.timeline-note{margin-top:16px;padding:13px;background:var(--panel);border-radius:9px}
+
+.run-grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(260px,.75fr);gap:15px;margin-top:28px}
+.terminal-card{padding:16px;margin-bottom:13px}
+.terminal-heading{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:11px}
+.terminal-heading h3{margin:0;font-size:1.03rem}
+.copy{min-height:44px;padding:8px 12px;border:1px solid var(--line);border-radius:7px;background:var(--panel-hi);color:var(--ink);cursor:pointer;font:600 .7rem "IBM Plex Mono",monospace}
+.copy:hover{border-color:var(--accent)}
+.copy-state{min-height:20px;margin:6px 0 0;color:var(--allowed-ink);font-size:.72rem}
+.platform-tabs{display:flex;gap:7px;margin:12px 0}
+.platform-tabs button{min-height:44px;padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--panel);cursor:pointer}
+.platform-tabs button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-text)}
+.safety{padding:20px;border-top:3px solid var(--logged)}
+.safety ul{display:grid;gap:10px;padding-left:20px;margin-bottom:0}
+.safety li{font-size:.84rem}
+.gloss-search{width:min(100%,420px);min-height:48px;margin:18px 0;padding:10px 13px;border:1px solid var(--line);border-radius:9px;background:var(--panel);color:var(--ink)}
+.glossary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.glossary-item{padding:13px;background:var(--panel);border:1px solid var(--line);border-radius:9px}
+.glossary-item dt{font:600 .78rem "IBM Plex Mono",monospace;color:var(--accent-ink)}
+.glossary-item dd{margin:5px 0 0;color:var(--muted);font-size:.82rem}
+.glossary-item[hidden]{display:none}
+.bridge-card{margin-top:28px;padding:15px;background:var(--panel);border:1px solid var(--line);border-radius:14px}
+.bridge-flow{display:flex;align-items:stretch;gap:9px}
+.bridge-node{flex:1 1 0;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:8px;padding:15px 12px;background:var(--panel-hi);border:1px solid var(--line);border-radius:11px;text-align:center}
+.bridge-node strong{font:600 .77rem "IBM Plex Mono",monospace;color:var(--accent-ink)}
+.bridge-node span{color:var(--muted);font-size:.76rem;line-height:1.45}
+.bridge-node.detection{border-color:var(--accent);background:var(--panel)}
+.bridge-arrow{align-self:center;color:var(--accent-ink);font:700 1.25rem "IBM Plex Mono",monospace}
+.roadmap{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-top:27px;padding:0;list-style:none}
+.roadmap li{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:14px;background:var(--panel);border:1px solid var(--line);border-radius:10px}
+.roadmap b{font-size:.87rem}
+.road-status{font:600 .68rem "IBM Plex Mono",monospace}
+.road-status.done{color:var(--allowed-ink)}.road-status.planned{color:var(--logged-ink)}
+.tutor{display:grid;grid-template-columns:1fr 220px;gap:20px;align-items:center;padding:22px;background:var(--panel);border:1px solid var(--line);border-radius:14px}
+.tutor svg{width:100%;max-width:200px;justify-self:center}
+.about-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px;margin-top:18px}
+.about-card{padding:20px}
+.about-card p:last-child{margin-bottom:0}
+.more-projects{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+.more-projects a{min-height:44px;display:inline-flex;align-items:center;padding:8px 13px;border:1px solid var(--line);border-radius:9px;background:var(--panel);text-decoration:none}
+footer{padding:42px 20px 56px;border-top:1px solid var(--line);background:var(--panel)}
+footer .wrap{display:grid;gap:14px}
+footer p{margin:0;color:var(--muted);font-size:.85rem}
+footer h2{margin:14px 0 0;font-size:1.05rem}
+.footer-links{display:flex;gap:10px 18px;flex-wrap:wrap}
+.footer-links a,footer p>a,.about-card>a,.sample-source{display:inline-flex;align-items:center;min-height:44px}
+.footer-links a{font-size:.83rem}
+.dialog{width:min(94vw,1100px);max-width:1100px;padding:0;border:1px solid var(--line);border-radius:13px;background:var(--panel);color:var(--ink);box-shadow:0 30px 90px rgba(0,0,0,.6)}
+.dialog::backdrop{background:rgba(0,0,0,.78)}
+.dialog-bar{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:10px 13px;font-size:.82rem}
+.dialog-bar button{width:44px;height:44px;border:1px solid var(--line);border-radius:8px;background:var(--panel-hi);cursor:pointer;font-size:1.3rem}
+.dialog img{width:100%;max-height:78vh;object-fit:contain;background:#fff}
+.dialog figcaption{padding:10px 13px;color:var(--muted);font-size:.83rem}
+.scene-paused .rec::before{animation:none;opacity:.65}
+@media(max-width:780px){
+  section{padding:62px 17px}
+  .hero{padding:80px 17px 24px;min-height:0}
+  .brand{margin-bottom:34px}
+  .triad{grid-template-columns:1fr}
+  .triad-card{min-height:0}
+  .question-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .question:last-child{grid-column:1/-1;min-height:120px}
+  .anatomy-grid,.rule-layout,.simulator,.run-grid{grid-template-columns:1fr}
+  .console-layout{grid-template-columns:1fr}
+  .record-list{max-height:420px}
+  .arch-layers{grid-template-columns:1fr}
+  .lesson-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .timeline{grid-template-columns:1fr}
+  .timepoint{min-height:88px;border-top:0;border-left:2px solid var(--line);padding:2px 12px 18px 20px}
+  .timepoint::before{left:-7px;top:2px}
+  .controls-list{grid-template-columns:1fr}
+}
+@media(max-width:560px){
+  body{font-size:16px}
+  .hero{padding-top:78px}
+  .hero-actions{align-items:stretch}
+  .hero-actions .btn{flex:1}
+  .ci-line{align-items:flex-start}
+  .scene-svg{display:none}
+  .mobile-requests{display:grid;gap:8px;padding:12px;margin:0;list-style:none;background:#0a0d0f;color:#edf2f3}
+  .mobile-requests li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 8px;padding:10px;border:1px solid #344047;border-radius:8px}
+  .mobile-requests code{font-size:.7rem;overflow-wrap:anywhere}
+  .mobile-requests small{grid-column:1/-1;color:#aeb9bd}
+  .mobile-requests .status.allowed{color:#9af0bf}
+  .mobile-requests .status.blocked{color:#ffaaa4}
+  .tape-head{padding:9px 11px}
+  .tape{height:112px;padding:9px 11px}
+  .tape-line{font-size:.64rem}
+  .question-grid{grid-template-columns:1fr 1fr;gap:8px}
+  .question{min-height:138px;padding:13px 11px}
+  .question h3{font-size:.91rem}
+  .anatomy-grid{grid-template-columns:1fr}
+  .anatomy-part{grid-template-columns:92px minmax(0,1fr)}
+  .architecture{padding:9px}
+  .architecture svg{min-height:130px}
+  .console-wrap{padding:10px}
+  .inspector{padding:12px}
+  .record-row{padding:10px 8px}
+  .phase{grid-template-columns:48px minmax(0,1fr);gap:8px}
+  .phase-number b{width:39px;height:39px}
+  .phase-content{padding:15px}
+  .shots{grid-template-columns:1fr}
+  .shot img{height:165px}
+  .attack-table th,.attack-table td{padding:9px 6px;font-size:.75rem}
+  .autopsy-grid,.rule-grid{grid-template-columns:1fr 1fr}
+  .lesson-grid{grid-template-columns:1fr}
+  .glossary{grid-template-columns:1fr}
+  .tutor{grid-template-columns:1fr}
+  .tutor svg{max-height:150px}
+  .about-grid{grid-template-columns:1fr}
+  .bridge-card{padding:8px}
+  .bridge-flow{flex-direction:column;gap:6px}
+  .bridge-node{width:100%;min-height:0;padding:12px}
+  .bridge-arrow{transform:rotate(90deg);line-height:1}
+  .utility{right:8px;top:8px}
+  .theme{padding:0 9px}
+  .term[data-tip]::after{position:fixed;left:16px;right:16px;bottom:16px;max-width:none}
+}
+@media(prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+  .scene-svg .moving{display:none!important}
+  .scene-svg .frozen{display:block!important}
+  .rec::before{animation:none}
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#story" data-i="skip"></a>
+<div class="utility">
+  <div class="switch" role="group" data-ia="languageControl">
+    <button type="button" data-lang="en" aria-pressed="true" data-ia="english">EN</button>
+    <button type="button" data-lang="es" aria-pressed="false" data-ia="spanish">ES</button>
+  </div>
+  <button type="button" class="theme" id="theme-toggle" aria-pressed="false" data-ia="themeButton">
+    <span class="theme-mark" aria-hidden="true">◐</span><span id="theme-label" data-i="themeDark"></span>
+  </button>
+</div>
+
+<header class="hero" id="top">
+  <div class="hero-shell">
+    <div class="brand">
+      <svg viewBox="0 0 48 48" role="img" aria-labelledby="brand-mark-title">
+        <title id="brand-mark-title" data-i="brandMark"></title>
+        <rect x="4" y="9" width="40" height="31" rx="6" fill="var(--accent)"/>
+        <path d="M10 24h7l4-6 6 13 5-8h7" fill="none" stroke="var(--accent-text)" stroke-width="2.5"/>
+        <circle cx="37" cy="34" r="2.5" fill="var(--accent-text)"/>
+      </svg>
+      <span data-i="brandline"></span>
+    </div>
+    <div class="hero-copy">
+      <p class="eyebrow" data-i="heroEyebrow"></p>
+      <h1>WAF Flight Recorder</h1>
+      <p class="hook" data-i="hook"></p>
+      <p class="proof-line"><strong data-i="proofLead"></strong> <span data-i="proof"></span></p>
+      <div class="row hero-actions">
+        <a class="btn primary" href="#story" data-i="readStory"></a>
+        <button class="btn secondary" type="button" id="send-request" data-i="sendRequest"></button>
+      </div>
+      <div class="row">
+        <a class="github-link" href="https://github.com/albeen-sknight/waf-flight-recorder" data-i="viewGithub"></a>
+      </div>
+      <div class="ci-line">
+        <a href="https://github.com/albeen-sknight/waf-flight-recorder/actions/workflows/lab.yml" data-ia="ciLink">
+          <img src="https://github.com/albeen-sknight/waf-flight-recorder/actions/workflows/lab.yml/badge.svg" width="116" height="22" alt="WAF lab GitHub Actions status" data-alt-key="ciAlt">
+        </a>
+        <span data-i="ciCaption"></span>
+      </div>
+    </div>
+
+    <div class="scene-panel" id="scene-panel">
+      <svg id="request-scene" class="scene-svg" viewBox="0 0 1000 300" role="img" aria-labelledby="scene-title scene-desc">
+        <title id="scene-title" data-i="sceneTitle"></title>
+        <desc id="scene-desc" data-i="sceneDescription"></desc>
+        <path class="flow" d="M18 66H955M18 151H955M18 236H955"/>
+        <text class="scene-label" x="30" y="22" data-i="arrivals"></text>
+        <g transform="translate(454 43)">
+          <rect class="gate" width="112" height="205" rx="12"/>
+          <path class="gate-bar" d="M25 34v136M56 34v136M87 34v136"/>
+          <text class="scene-label" x="56" y="188" text-anchor="middle" data-i="guardLabel"></text>
+        </g>
+        <g transform="translate(768 60)">
+          <path class="shop" d="M0 54h174v146H0z"/>
+          <path class="shop" d="M-7 54 10 15h140l18 39z"/>
+          <path class="shop-light" d="M14 18h132l12 29H2z"/>
+          <path d="M22 82h46v56H22zM91 82h56v25H91zM91 119h56v40H91z" fill="none" stroke="var(--line)" stroke-width="3"/>
+          <text class="scene-label" x="84" y="222" text-anchor="middle" data-i="shopLabel"></text>
+        </g>
+        <g class="moving packet-one">
+          <rect class="packet-box" x="30" y="39" width="228" height="55" rx="8"/>
+          <text class="packet-method" x="42" y="57">GET</text>
+          <text class="packet-path" x="42" y="73">/rest/products/search</text>
+          <text class="packet-label" x="42" y="87" data-i="heroCardOne"></text>
+          <rect class="stamp-ok" x="198" y="49" width="48" height="21" rx="5"/>
+          <text class="stamp-text" x="222" y="64" text-anchor="middle">200</text>
+        </g>
+        <g class="moving packet-two">
+          <rect class="packet-box" x="30" y="124" width="228" height="55" rx="8"/>
+          <text class="packet-method" x="42" y="142">POST</text>
+          <text class="packet-path" x="42" y="158">/api/Feedbacks/</text>
+          <text class="packet-label" x="42" y="172" data-i="heroCardTwo"></text>
+          <rect class="stamp-no" x="198" y="134" width="48" height="21" rx="5"/>
+          <text class="stamp-text" x="222" y="149" text-anchor="middle">403</text>
+        </g>
+        <g class="moving packet-three">
+          <rect class="packet-box" x="30" y="209" width="228" height="55" rx="8"/>
+          <text class="packet-method" x="42" y="227">PUT</text>
+          <text class="packet-path" x="42" y="243">/api/BasketItems/1</text>
+          <text class="packet-label" x="42" y="257" data-i="heroCardThree"></text>
+          <rect class="stamp-ok" x="198" y="219" width="48" height="21" rx="5"/>
+          <text class="stamp-text" x="222" y="234" text-anchor="middle">200</text>
+        </g>
+        <g class="frozen" transform="translate(454 50)">
+          <rect class="packet-box" width="228" height="55" rx="8"/>
+          <text class="packet-method" x="12" y="18">POST</text><text class="packet-path" x="12" y="34">/api/Feedbacks/</text>
+          <text class="packet-label" x="12" y="48" data-i="heroCardTwo"></text>
+          <rect class="stamp-no" x="168" y="10" width="48" height="21" rx="5"/><text class="stamp-text" x="192" y="25" text-anchor="middle">403</text>
+        </g>
+        <g class="frozen" transform="translate(454 135)">
+          <rect class="packet-box" width="228" height="55" rx="8"/>
+          <text class="packet-method" x="12" y="18">GET</text><text class="packet-path" x="12" y="34">/rest/products/search</text>
+          <text class="packet-label" x="12" y="48" data-i="heroCardOne"></text>
+          <rect class="stamp-ok" x="168" y="10" width="48" height="21" rx="5"/><text class="stamp-text" x="192" y="25" text-anchor="middle">200</text>
+        </g>
+      </svg>
+      <ul class="mobile-requests" data-ia="requestExamples">
+        <li><code>GET /rest/products/search</code><span class="status allowed">200</span><small data-i="heroCardOne"></small></li>
+        <li><code>POST /api/Feedbacks/</code><span class="status blocked">403</span><small data-i="heroCardTwo"></small></li>
+        <li><code>PUT /api/BasketItems/1</code><span class="status allowed">200</span><small data-i="heroCardThree"></small></li>
+      </ul>
+      <div class="tape-head">
+        <span class="rec">REC</span><span data-i="tapeLabel"></span><span data-i="localReplay"></span>
+      </div>
+      <div class="tape" id="flight-tape" data-ia="sampleReplay"></div>
+      <div class="tape-note" id="replay-note" role="status" data-i="replayNote"></div>
+    </div>
+    <p class="sr" data-i="sceneAlternative"></p>
+  </div>
+</header>
+
+<main id="story">
+  <section aria-labelledby="shop-heading">
+    <div class="wrap">
+      <p class="kicker" data-i="kickerPicture"></p>
+      <h2 id="shop-heading" data-i="pictureTitle"></h2>
+      <p class="lead" data-i="pictureLead"></p>
+      <div class="triad">
+        <article class="card triad-card">
+          <div class="icon-box"><svg viewBox="0 0 48 48" role="img" aria-labelledby="shop-icon-title"><title id="shop-icon-title" data-i="shopIcon"></title><path d="M7 21h34v21H7zM5 18l5-11h28l5 11c0 4-3 6-6 6s-5-2-5-6c0 4-3 6-7 6s-7-2-7-6c0 4-3 6-7 6s-6-2-6-6z" fill="none" stroke="currentColor" stroke-width="2.5"/><path d="M14 30h9v12M29 30h7v7h-7z" fill="none" stroke="currentColor" stroke-width="2.5"/></svg></div>
+          <h3 data-i="shopCardTitle"></h3><p data-i="shopCardText"></p>
+        </article>
+        <article class="card triad-card">
+          <div class="icon-box"><svg viewBox="0 0 48 48" role="img" aria-labelledby="guard-icon-title"><title id="guard-icon-title" data-i="guardIcon"></title><path d="M8 40V9h32v31M16 40V18h16v22M4 40h40M12 13h24" fill="none" stroke="currentColor" stroke-width="2.5"/><circle cx="24" cy="27" r="3" fill="var(--accent)"/></svg></div>
+          <h3 data-i="guardCardTitle"></h3><p data-i="guardCardText"></p>
+        </article>
+        <article class="card triad-card">
+          <div class="icon-box"><svg viewBox="0 0 48 48" role="img" aria-labelledby="box-icon-title"><title id="box-icon-title" data-i="boxIcon"></title><rect x="6" y="9" width="36" height="30" rx="5" fill="none" stroke="currentColor" stroke-width="2.5"/><path d="M12 25h6l4-8 6 15 4-7h5" fill="none" stroke="var(--accent)" stroke-width="2.5"/><circle cx="36" cy="14" r="2" fill="var(--accent)"/></svg></div>
+          <h3 data-i="boxCardTitle"></h3><p data-i="boxCardText"></p>
+        </article>
+      </div>
+      <p class="lead" style="margin-top:22px" data-i="learningLab"></p>
+      <div class="term-rail" data-ia="securityTerms">
+        <span class="term" tabindex="0" data-i="termWaf" data-tip-key="defWaf"></span>
+        <span class="term" tabindex="0" data-i="termModSecurity" data-tip-key="defModSecurity"></span>
+        <span class="term" tabindex="0" data-i="termCrs" data-tip-key="defCrs"></span>
+        <span class="term" tabindex="0" data-i="termFalsePositive" data-tip-key="defFalsePositive"></span>
+        <span class="term" tabindex="0" data-i="termExclusion" data-tip-key="defExclusion"></span>
+        <span class="term" tabindex="0" data-i="termAnomaly" data-tip-key="defAnomaly"></span>
+        <span class="term" tabindex="0" data-i="termThreshold" data-tip-key="defThreshold"></span>
+        <span class="term" tabindex="0" data-i="termAudit" data-tip-key="defAudit"></span>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="questions-heading">
+    <div class="wrap">
+      <p class="kicker" data-i="kickerQuestions"></p>
+      <h2 id="questions-heading" data-i="questionsTitle"></h2>
+      <p class="lead" data-i="questionsLead"></p>
+      <div class="question-grid" id="question-grid"></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="anatomy-heading">
+    <div class="wrap">
+      <p class="kicker" data-i="kickerConversation"></p>
+      <h2 id="anatomy-heading" data-i="conversationTitle"></h2>
+      <p class="lead" data-i="conversationLead"></p>
+      <div class="anatomy-grid">
+        <div class="order-slip">
+          <div class="slip-head"><span data-i="orderSlip"></span><span class="mono">GET /rest/products/search?q=apple</span></div>
+          <div class="slip-items" role="group" data-ia="anatomyControl">
+            <button class="anatomy-part" type="button" data-part="method" aria-pressed="true"><b data-i="methodLabel"></b><code>GET</code></button>
+            <button class="anatomy-part" type="button" data-part="path" aria-pressed="false"><b data-i="pathLabel"></b><code>/rest/products/search</code></button>
+            <button class="anatomy-part" type="button" data-part="parameters" aria-pressed="false"><b data-i="parametersLabel"></b><code>?q=apple</code></button>
+            <button class="anatomy-part" type="button" data-part="headers" aria-pressed="false"><b data-i="headersLabel"></b><code>User-Agent: Mozilla/5.0</code></button>
+            <button class="anatomy-part" type="button" data-part="body" aria-pressed="false"><b data-i="bodyLabel"></b><code data-i="bodyExample"></code></button>
+          </div>
+        </div>
+        <aside class="card anatomy-explain" aria-live="polite">
+          <p class="micro-label" data-i="restaurantVersion"></p>
+          <p id="anatomy-restaurant"></p>
+          <p class="micro-label" data-i="websiteVersion"></p>
+          <p id="anatomy-website"></p>
+        </aside>
+      </div>
+      <h3 style="margin-top:28px" data-i="statusCodesTitle"></h3>
+      <div class="status-chips" id="status-chips"></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="setup-heading">
+    <div class="wrap">
+      <p class="kicker" data-i="kickerSetup"></p>
+      <h2 id="setup-heading" data-i="setupTitle"></h2>
+      <p class="lead" data-i="setupLead"></p>
+      <div class="architecture">
+        <svg viewBox="0 0 1000 300" role="img" aria-labelledby="arch-title arch-desc">
+          <title id="arch-title" data-i="archTitle"></title><desc id="arch-desc" data-i="archDescription"></desc>
+          <defs><marker id="arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0 0 9 4.5 0 9z" fill="var(--accent)"/></marker></defs>
+          <rect x="15" y="92" width="150" height="72" rx="12" fill="var(--panel-hi)" stroke="var(--line)" stroke-width="2"/>
+          <text x="90" y="121" fill="var(--ink)" font-size="14" text-anchor="middle" data-i="archClient"></text><text x="90" y="144" fill="var(--muted)" font-size="12" text-anchor="middle" data-i="archClientDetail"></text>
+          <path d="M170 128h75" stroke="var(--accent)" stroke-width="3" marker-end="url(#arrow)"/>
+          <rect x="254" y="92" width="150" height="72" rx="12" fill="var(--panel-hi)" stroke="var(--line)" stroke-width="2"/>
+          <text x="329" y="120" fill="var(--ink)" font-size="13" text-anchor="middle">127.0.0.1:8080</text><text x="329" y="144" fill="var(--muted)" font-size="12" text-anchor="middle" data-i="hostOnly"></text>
+          <path d="M409 128h58" stroke="var(--accent)" stroke-width="3" marker-end="url(#arrow)"/>
+          <rect x="476" y="72" width="270" height="112" rx="14" fill="var(--panel-hi)" stroke="var(--accent)" stroke-width="2"/>
+          <text x="611" y="102" fill="var(--accent-ink)" font-size="14" font-weight="600" text-anchor="middle">Apache 2.4.58</text>
+          <text x="611" y="127" fill="var(--ink)" font-size="13" text-anchor="middle">ModSecurity 2.9.7</text>
+          <text x="611" y="152" fill="var(--ink)" font-size="13" text-anchor="middle">OWASP CRS v4.29.0</text>
+          <path d="M751 128h70" stroke="var(--accent)" stroke-width="3" marker-end="url(#arrow)"/>
+          <rect x="830" y="92" width="155" height="72" rx="12" fill="var(--panel-hi)" stroke="var(--line)" stroke-width="2"/>
+          <text x="907" y="120" fill="var(--ink)" font-size="13" text-anchor="middle">Juice Shop v20.2.0</text><text x="907" y="144" fill="var(--muted)" font-size="12" text-anchor="middle" data-i="internalOnly"></text>
+          <path d="M610 190v50H480" fill="none" stroke="var(--accent)" stroke-width="2.5" marker-end="url(#arrow)"/>
+          <rect x="240" y="222" width="244" height="52" rx="10" fill="var(--terminal)" stroke="var(--line)" stroke-width="2"/>
+          <text x="362" y="244" fill="var(--accent-ink)" font-size="12" text-anchor="middle">evidence/raw/audit.json</text><text x="362" y="262" fill="var(--muted)" font-size="11" text-anchor="middle" data-i="oneLinePerRequest"></text>
+        </svg>
+      </div>
+      <div class="arch-layers">
+        <article class="layer"><span class="micro-label" data-i="layerEngine"></span><b>ModSecurity 2.9.7</b><p data-i="engineLayer"></p></article>
+        <article class="layer"><span class="micro-label" data-i="layerRulebook"></span><b>OWASP CRS v4.29.0</b><p data-i="crsLayer"></p></article>
+        <article class="layer"><span class="micro-label" data-i="layerMyRules"></span><b>100001 to 100090</b><p data-i="myLayer"></p></article>
+      </div>
+      <p class="docker-note" data-i="dockerNote"></p>
+    </div>
+  </section>
+
+  <section aria-labelledby="console-heading">
+    <div class="wrap">
+      <p class="kicker" data-i="kickerConsole"></p>
+      <h2 id="console-heading" data-i="consoleTitle"></h2>
+      <p class="lead" data-i="consoleLead"></p>
+      <div class="console-wrap">
+        <div class="console-top"><p data-i="consoleIntro"></p><span class="tag" data-i="sampleBadge"></span></div>
+        <div class="console-layout">
+          <div class="record-list" id="record-list" role="listbox" data-ia="recordList"></div>
+          <article class="inspector" id="inspector" aria-live="polite">
+            <div class="inspector-head">
+              <div><h3 id="inspect-title"></h3><p id="inspect-subtitle"></p></div>
+              <span id="inspect-status" class="status"></span>
+            </div>
+            <div class="answers" id="answers"></div>
+          </article>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="build-heading">
+    <div class="wrap">
+      <p class="kicker" data-i="kickerBuild"></p>
+      <h2 id="build-heading" data-i="buildTitle"></h2>
+      <p class="lead" data-i="buildLead"></p>
+      <div class="stepper" id="phase-list"></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="rule-heading">
+    <div class="wrap">
+      <p class="kicker" data-i="kickerRule"></p>
+      <h2 id="rule-heading" data-i="ruleTitle"></h2>
+      <p class="lead" data-i="ruleLead"></p>
+      <div class="rule-layout">
+        <div>
+          <div class="rule-code-wrap">
+            <code class="rule-code" id="rule-code">
+              <button type="button" class="rule-part" data-rulepart="directive" aria-pressed="true">SecRule</button>
+              <button type="button" class="rule-part" data-rulepart="target" aria-pressed="false">REQUEST_HEADERS:User-Agent</button>
+              <button type="button" class="rule-part" data-rulepart="operator" aria-pressed="false">@contains Albeen-Scanner</button>
+              <button type="button" class="rule-part" id="rule-actions" data-rulepart="actions" aria-pressed="false">"id:100080,phase:1,deny,status:403,log,t:none,msg:'My rule'"</button>
+            </code>
+          </div>
+          <div class="rule-demo">
+            <button type="button" id="lowercase-toggle" aria-pressed="false" data-i="lowercaseToggle"></button>
+            <div class="rule-result"><span><code>User-Agent</code>: <b id="marker-value">albeen-scanner/1.0</b></span><span id="marker-outcome"></span></div>
+          </div>
+        </div>
+        <aside class="card rule-info"><p class="micro-label" data-i="bouncerVersion"></p><p id="rule-meaning"></p></aside>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="sim-heading">
+    <div class="wrap">
+      <p class="kicker" data-i="kickerSimulator"></p>
+      <h2 id="sim-heading" data-i="simTitle"></h2>
+      <p class="lead" data-i="simLead"></p>
+      <div class="simulator">
+        <div class="card sim-controls">
+          <p class="micro-label" data-i="pickSignals"></p>
+          <div class="checks">
+            <label class="check-line"><input type="checkbox" class="score-check" value="3" checked><span data-i="bareIp"></span><b>+3</b></label>
+            <label class="check-line"><input type="checkbox" class="score-check" value="2"><span data-i="emptyAgent"></span><b>+2</b></label>
+            <label class="check-line"><input type="checkbox" class="score-check" value="5"><span data-i="seriousRule"></span><b>+5</b></label>
+          </div>
+          <label class="slider-head" for="threshold"><span data-i="thresholdLabel"></span><output id="threshold-value" for="threshold">5</output></label>
+          <input type="range" id="threshold" min="5" max="10" step="5" value="5" aria-valuemin="5" aria-valuemax="10" aria-valuenow="5" data-ia="thresholdSlider">
+          <div class="range-stops"><span>5</span><span>10</span></div>
+        </div>
+        <div class="card sim-readout">
+          <p class="micro-label" data-i="refereeRule"></p>
+          <h3><code>949110</code></h3>
+          <p data-i="refereeText"></p>
+          <div class="score-visual" id="score-visual" role="img" data-ia="scoreBar"><div class="score-fill" id="score-fill"></div></div>
+          <div class="sim-decision"><b data-i="totalScore"></b><code id="sim-score">3 / 5</code><span id="sim-chip" class="status logged"></span></div>
+          <p id="sim-result"></p>
+          <p class="threshold-reveal" id="threshold-reveal" hidden data-i="thresholdTen"></p>
+        </div>
+      </div>
+      <figure class="shots">
+        <button type="button" class="shot" data-shot="screenshots/14-threshold-10.png" data-caption-key="shot14" data-alt-key="shot14Alt" data-width="1351" data-height="443" data-ia="thresholdShot">
+          <img src="screenshots/14-threshold-10.png" width="1351" height="443" loading="lazy" alt="With the limit at 10, these attacks walk straight through" data-alt-key="shot14Alt">
+          <span data-i="shot14"></span>
+        </button>
+      </figure>
+      <p class="lesson-callout" data-i="thresholdLesson"></p>
+    </div>
+  </section>
+
+  <section aria-labelledby="own-rules-heading">
+    <div class="wrap">
+      <p class="kicker" data-i="kickerOwnRules"></p>
+      <h2 id="own-rules-heading" data-i="ownRulesTitle"></h2>
+      <p class="lead" data-i="ownRulesLead"></p>
+      <div class="rule-grid" id="rule-grid"></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="lessons-heading">
+    <div class="wrap">
+      <p class="kicker" data-i="kickerLessons"></p>
+      <h2 id="lessons-heading" data-i="lessonsTitle"></h2>
+      <div class="lesson-grid" id="lesson-grid"></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="time-heading">
+    <div class="wrap">
+      <p class="kicker" data-i="kickerTime"></p>
+      <h2 id="time-heading" data-i="timeTitle"></h2>
+      <div class="timeline" id="timeline"></div>
+      <p class="timeline-note" data-i="longDay"></p>
+    </div>
+  </section>
+
+  <section aria-labelledby="run-heading">
+    <div class="wrap">
+      <p class="kicker" data-i="kickerRun"></p>
+      <h2 id="run-heading" data-i="runTitle"></h2>
+      <p class="lead" data-i="runLead"></p>
+      <div class="platform-tabs" role="group" data-ia="platformControl">
+        <button type="button" data-platform="powershell" aria-pressed="true" data-i="windows"></button>
+        <button type="button" data-platform="bash" aria-pressed="false" data-i="macLinux"></button>
+      </div>
+      <div class="run-grid">
+        <div id="commands"></div>
+        <aside class="card safety">
+          <h3 data-i="safetyTitle"></h3>
+          <ul id="safety-list"></ul>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="bridge-heading">
+    <div class="wrap">
+      <p class="kicker" data-i="kickerBridge"></p>
+      <h2 id="bridge-heading" data-i="bridgeTitle"></h2>
+      <p class="lead" data-i="bridgeLead"></p>
+      <div class="bridge-card">
+        <div class="bridge-flow">
+          <div class="bridge-node"><strong data-i="bridgeAttacker"></strong><span data-i="bridgeAttack"></span></div>
+          <span class="bridge-arrow" aria-hidden="true">→</span>
+          <div class="bridge-node"><strong data-i="bridgeWeb01"></strong><span data-i="bridgeShop"></span></div>
+          <span class="bridge-arrow" aria-hidden="true">→</span>
+          <div class="bridge-node"><strong data-i="bridgeLog"></strong><span data-i="bridgeLogFlow"></span></div>
+          <span class="bridge-arrow" aria-hidden="true">→</span>
+          <div class="bridge-node detection"><strong>Splunk · D10</strong><span data-i="bridgeDetection"></span></div>
+          <span class="bridge-arrow" aria-hidden="true">→</span>
+          <div class="bridge-node"><strong data-i="bridgePhone"></strong><span data-i="bridgePage"></span></div>
+        </div>
+      </div>
+      <div class="row" style="margin-top:17px">
+        <a class="btn primary" href="https://albeen-sknight.github.io/soc-in-a-box/" data-i="seeSoc"></a>
+        <a class="link-btn" href="https://github.com/albeen-sknight/soc-in-a-box" data-i="socRepo"></a>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="roadmap-heading">
+    <div class="wrap">
+      <p class="kicker" data-i="kickerRoadmap"></p>
+      <h2 id="roadmap-heading" data-i="roadmapTitle"></h2>
+      <ol class="roadmap" id="roadmap"></ol>
+    </div>
+  </section>
+
+  <section aria-labelledby="glossary-heading">
+    <div class="wrap">
+      <p class="kicker" data-i="kickerGlossary"></p>
+      <h2 id="glossary-heading" data-i="glossaryTitle"></h2>
+      <label class="sr" for="glossary-search" data-i="glossarySearch"></label>
+      <input class="gloss-search" id="glossary-search" type="search" autocomplete="off" data-ip="glossarySearch">
+      <dl class="glossary" id="glossary-list"></dl>
+    </div>
+  </section>
+
+  <section aria-labelledby="learn-heading">
+    <div class="wrap">
+      <p class="kicker" data-i="kickerLearn"></p>
+      <h2 id="learn-heading" data-i="learnTitle"></h2>
+      <div class="tutor card">
+        <div><p data-i="learnFirst"></p><p data-i="learnSecond"></p></div>
+        <svg viewBox="0 0 220 150" role="img" aria-labelledby="tutor-title">
+          <title id="tutor-title" data-i="tutorAlt"></title>
+          <rect x="19" y="15" width="182" height="118" rx="30" fill="var(--panel-hi)" stroke="var(--line)" stroke-width="2"/>
+          <rect x="38" y="28" width="144" height="28" rx="8" fill="var(--bg)" stroke="var(--line)"/>
+          <circle cx="83" cy="87" r="18" fill="none" stroke="var(--accent)" stroke-width="4"/><path d="M65 87h36M83 87v17" stroke="var(--accent)" stroke-width="3"/>
+          <circle cx="139" cy="87" r="18" fill="none" stroke="var(--muted)" stroke-width="4"/><path d="M121 87h36M139 87v17" stroke="var(--muted)" stroke-width="3"/>
+          <text x="83" y="126" text-anchor="middle" fill="var(--accent-ink)" font-size="10">ALBEEN</text><text x="139" y="126" text-anchor="middle" fill="var(--muted)" font-size="10">TUTOR</text>
+        </svg>
+      </div>
+      <div class="about-grid">
+        <article class="card about-card"><h3 data-i="aboutTitle"></h3><p data-i="aboutFirst"></p><p data-i="aboutSecond"></p></article>
+        <article class="card about-card"><h3 data-i="whyTitle"></h3><p data-i="whyText"></p><a href="https://github.com/albeen-sknight" data-i="profileLink"></a></article>
+      </div>
+      <h3 style="margin-top:25px" data-i="moreProjects"></h3>
+      <div class="more-projects">
+        <a href="https://albeen-sknight.github.io/soc-in-a-box/">SOC in a Box</a>
+        <a href="https://albeen-sknight.github.io/pocket-pantheon/">Pocket Pantheon</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p data-i="footerNote"></p>
+    <nav class="footer-links" data-ia="projectLinks">
+      <a href="https://github.com/albeen-sknight" data-i="profileLink"></a>
+      <a href="https://github.com/albeen-sknight/waf-flight-recorder" data-i="repoLink"></a>
+      <a href="https://albeen-sknight.github.io/soc-in-a-box/">SOC in a Box</a>
+      <a href="https://albeen-sknight.github.io/pocket-pantheon/">Pocket Pantheon</a>
+    </nav>
+    <h2 data-i="referencesTitle"></h2>
+    <nav class="footer-links" data-ia="referencesNav">
+      <a href="https://owasp.org/www-project-juice-shop/">OWASP Juice Shop</a>
+      <a href="https://github.com/owasp-modsecurity/ModSecurity/wiki" data-i="modsecurityReference"></a>
+      <a href="https://coreruleset.org/docs/">OWASP CRS docs</a>
+    </nav>
+    <p><a href="https://albeen-sknight.github.io/waf-flight-recorder/" data-i="liveShowcase"></a></p>
+  </div>
+</footer>
+
+<dialog class="dialog" id="lightbox" aria-labelledby="lightbox-caption">
+  <div class="dialog-bar"><span id="lightbox-caption"></span><button type="button" id="lightbox-close" data-ia="closeImage">×</button></div>
+  <img id="lightbox-image" alt="">
+  <p id="lightbox-alt" class="sr"></p>
+</dialog>
+
+<script>
+const en = {
+  title:"WAF Flight Recorder | Request, rule, proof",
+  description:"A real ModSecurity lab in front of OWASP Juice Shop, with custom rules, audit evidence, false positive fixes and regression tests.",
+  ogDescription:"A real web application firewall, its rules, and the evidence behind each decision.",
+  skip:"Skip to the story",languageControl:"Choose page language",english:"English",spanish:"Spanish",themeButton:"Switch page theme",
+  themeDark:"Dark",themeLight:"Light",brandMark:"Orange flight recorder mark",brandline:"A security lab, recorded",
+  ciLink:"View the WAF lab continuous integration workflow",ciAlt:"WAF lab GitHub Actions status",
+  requestExamples:"Request examples",sampleReplay:"Sample audit log replay",securityTerms:"Security terms",
+  projectLinks:"Project links",referencesNav:"References",
+  thresholdShot:"Open the threshold ten experiment screenshot",localReplay:"LOCAL REPLAY",
+  platformControl:"Choose command line platform",scoreBar:"Current score compared with threshold",thresholdSlider:"Choose anomaly threshold",
+  methodLabel:"METHOD",pathLabel:"PATH",parametersLabel:"PARAMETERS",headersLabel:"HEADERS",bodyLabel:"BODY",
+  archClientDetail:"browser / test runner",layerEngine:"ENGINE",layerRulebook:"RULEBOOK",layerMyRules:"MY RULES",
+  termWaf:"WAF",termModSecurity:"ModSecurity",termCrs:"CRS",termFalsePositive:"False positive",
+  termExclusion:"Exclusion",termAnomaly:"Anomaly score",termThreshold:"Threshold",termAudit:"Audit log",
+  defAudit:"The flight recorder, with one entry for each request.",
+  defWaf:"A guard at a website's door that checks each visitor.",
+  defModSecurity:"The engine that runs the WAF rules.",defCrs:"The professional OWASP rulebook.",
+  defFalsePositive:"An honest request that the WAF blocks by mistake.",defExclusion:"A narrow exception that changes how one rule applies.",
+  defAnomaly:"Penalty points added by rules that match.",defThreshold:"The point limit that triggers a block.",
+  attackName:"Attack name",everydayVersion:"Everyday version",resultBlocked:"Result",blockedByCrs:"Blocked by CRS",
+  autopsy942:"SQL tokenizer",autopsy941:"Six decoding steps",autopsy930:"Sensitive file names",
+  autopsy932:"The false alarm rule",autopsy920:"Three points, allowed",
+  lazyHeading:"Three tempting shortcuts",controlsHeading:"Four controls that stayed blocked",
+  lazyFixes:["Delete the rule.","Ignore the comment field everywhere.","Raise the threshold."],
+  fourControls:["A command that tries to read a system file in the same comment field.","Script content in the same field.","The same command pattern in another field.","The same comment on a different route."],
+  themeButtonLight:"Switch to light theme",themeButtonDark:"Switch to dark theme",
+  heroEyebrow:"A request meets a real web application firewall",
+  hook:"I put a real web application firewall in front of a shop that's broken on purpose. Then I tested it, wrote my own rules, broke them, found a mistake in the official rulebook and fixed it without opening a hole.",
+  proofLead:"The proof promise.",proof:"Every claim has a log entry behind it and a test that fails the moment it stops being true.",
+  readStory:"Read the story",sendRequest:"Send a request",viewGithub:"View on GitHub",ciCaption:"Live lab checks on every change",
+  sceneTitle:"Requests meet a gate before reaching the shop",sceneDescription:"A normal search and basket edit pass. A feedback request pauses at the WAF and receives a 403. The audit strip records each example.",
+  arrivals:"INCOMING REQUESTS",guardLabel:"WAF",shopLabel:"JUICE SHOP",heroCardOne:"Normal search",heroCardTwo:"Feedback before the fix",heroCardThree:"Basket update",
+  tapeLabel:"AUDIT TAPE, ONE LINE PER REQUEST",replayNote:"The button replays a safe example in this illustration. It does not contact a live WAF.",
+  replaySafe:"Safe example replayed in the illustration. Nothing was sent to a server.",
+  sceneAlternative:"An animated shop, a WAF gate, allowed green request cards, a blocked red card, and a flight recorder log strip.",
+  kickerPicture:"The picture",pictureTitle:"A shop, a guard, a black box",
+  pictureLead:"The whole lab fits in one picture. The shop is intentionally vulnerable, the WAF stands at its only public door, and the recorder keeps the evidence.",
+  shopIcon:"Store front drawing",guardIcon:"Gate drawing",boxIcon:"Recording box drawing",
+  shopCardTitle:"The shop",shopCardText:"OWASP Juice Shop is built with holes on purpose so people can learn safely. This copy runs inside the lab.",
+  guardCardTitle:"The guard",guardCardText:"ModSecurity runs OWASP CRS and my own rules. It checks a request before the shop sees it.",
+  boxCardTitle:"The black box",boxCardText:"One JSON audit entry records each transaction. A response header carries its tracking number.",
+  learningLab:"This is a learning lab. It protects nothing real.",
+  kickerQuestions:"Five questions",questionsTitle:"What I ask of every request",
+  questionsLead:"The replay console below lets you follow the evidence in the same order, from what the guard saw to a narrow fix.",
+  q1:"What did the guard look at?",q2:"Which instruction kicked in?",q3:"Why did it match?",q4:"What did it decide?",q5:"How can I fix a wrong decision safely?",
+  kickerConversation:"The order slip",conversationTitle:"How a website conversation works",
+  conversationLead:"A website request is like ordering at a restaurant counter. Tap a line to see the restaurant version and the website version.",
+  orderSlip:"ONE REQUEST",anatomyControl:"Choose a request part",bodyExample:"A filled in form, when present",
+  restaurantVersion:"At the restaurant",websiteVersion:"On the website",
+  anatomy:{
+    method:["What you want to do","GET asks to see something. POST sends something new."],
+    path:["Which counter you visit","The page or service that receives the request."],
+    parameters:["The details on the order","Extra information after a question mark in the address."],
+    headers:["The card you show","Information such as browser name, cookies, and where you came from."],
+    body:["The filled in form","Data sent with a request, such as a login form."]
+  },
+  statusCodesTitle:"The answer comes back as a status code",
+  statuses:[
+    ["200","Here's your food","Everything is fine"],
+    ["201","Order received","Something new was created"],
+    ["401","Show your membership card","You need to log in"],
+    ["403","You cannot come in","The request was refused"],
+    ["404","We do not have that dish","That page does not exist"]
+  ],
+  kickerSetup:"The setup",setupTitle:"One door, one corridor, one shop",
+  setupLead:"Docker links the browser or test runner to a local WAF. Only allowed requests reach Juice Shop. The shop has no published port.",
+  archTitle:"The lab architecture",archDescription:"Browser or test runner goes to localhost port 8080, then Apache with ModSecurity and OWASP CRS, then Juice Shop on an internal Docker network. The WAF writes audit.json.",
+  archClient:"Browser or test runner",hostOnly:"this computer only",internalOnly:"internal network only",oneLinePerRequest:"one line per request",
+  engineLayer:"The guard's engine reads the request and follows its instructions.",
+  crsLayer:"A maintained professional rulebook, pinned and left untouched.",
+  myLayer:"Small local rules and narrow exceptions, kept separate from CRS.",
+  dockerNote:"Docker is like a set of lunchboxes. Each app carries what it needs, and the compose file says how the boxes connect.",
+  kickerConsole:"The centrepiece",consoleTitle:"Replay the flight recorder",
+  consoleLead:"These real, cleaned entries came from evidence/sanitized-samples. Choose a row, then follow all five questions. No query string is shown in the transaction list.",
+  consoleIntro:"Select a transaction to inspect the matching fields, rule messages, score, decision, and fix.",
+  sampleBadge:"15 SANITIZED SAMPLES",recordList:"Sanitized transaction samples",
+  record:{
+    fpBefore:"FP 001, before the fix",fpAfter:"FP 001, after the fix",fpControl:"FP 001, safety control",
+    basketBeforePut:"FP 002, basket update before",basketBeforeDelete:"FP 002, basket removal before",basketAfterPut:"FP 002, basket update after",
+    labBeforeCough:"Lab F, cough drops before",labAfterCough:"Lab F, cough drops after",labBeforeControl:"Lab F, database command before",labAfterControl:"Lab F, database command after",
+    searchBlocked:"Search test, WAF on",searchWatch:"Search test, DetectionOnly",numericHost:"Numeric host, below threshold",
+    loginFive:"Login check, threshold 5",loginTen:"Login check, threshold 10"
+  },
+  allowed:"ALLOWED",blocked:"BLOCKED",loggedAllowed:"LOGGED, ALLOWED",compareLabel:"Compare the tuning change",
+  before:"Before",after:"After",sourceSample:"Open this sanitized sample on GitHub",notTuned:"This entry is evidence for a decision. Its related rule notes are linked in the repository.",
+  noMatch:"No rule matched. The request reached the application.",
+  fieldComment:"The comment field in the JSON body",fieldMethod:"The HTTP method",fieldSearch:"The search field in the query parameters",
+  fieldHost:"The Host header",fieldEmail:"The email field in the JSON body",
+  safeFpValue:"The link https://example.com/?ref=juice&utm_source=mail in your newsletter has a typo",
+  safeBasketValue:"{\"quantity\": 2}",safeCoughValue:"q: cough drops",
+  contentFp:"A customer pasted a newsletter link into the feedback comment.",
+  contentControl:"The comment tries to run a command that reads a system file. The page shows only this plain description.",
+  contentBasket:"The shop asks to change the quantity of one basket item.",
+  contentDelete:"The shop asks to remove one basket item.",
+  contentCough:"A shopper is looking for cough drops in the product search.",
+  contentDropControl:"The search text contains a database command. Its text stays out of this page.",
+  contentSqlSearch:"The search field contains a database login shortcut. Its text stays out of this page.",
+  contentNumeric:"The request used a numeric address in the Host header.",
+  contentEmail:"The login email field tries to bypass the normal login check. Its text stays out of this page.",
+  whyFp:"Rule 932235 looks for a command shaped pattern. The newsletter link happens to include pieces the rule recognizes, even though the customer is sharing a URL.",
+  whyFpAfter:"The runtime exclusion applies to one rule, one comment field, and one feedback route. The other CRS checks remain active.",
+  whyControl:"The exclusion removes only rule 932235 from the comment field on this route. Other CRS rules still catch a command that tries to read a system file.",
+  whyBasket:"CRS allowed only its most common methods. Juice Shop uses PUT and DELETE for basket work, so the app configuration needed a broader method list.",
+  whyBasketAfter:"The allowed method list now describes the app's basket actions. Separate local rules still refuse WebDAV methods and DELETE on feedback.",
+  whyLabBefore:"The first version searched for a fragment inside any word. It treated the ordinary product name as suspicious.",
+  whyLabAfter:"The narrower version checks whole words and the following object type. The ordinary search passes.",
+  whyLabControl:"The narrowed rule still blocks a database statement. A real attack control stays in the regression suite.",
+  whySqli:"CRS rule 942100 uses libinjection to recognize SQL shaped input. Rule 949110 compares its five points with the threshold of five.",
+  whyDetection:"DetectionOnly keeps the rule match and score in the log, but does not enforce the block. The backend returns 200.",
+  whyHost:"Rule 920350 adds three WARNING points. Three is below the threshold of five, so the request is logged and allowed.",
+  whyLoginFive:"One CRITICAL match contributes five points. At a threshold of five, rule 949110 denies the request.",
+  whyLoginTen:"The same one rule contributes five points. At a threshold of ten, it is recorded but not denied, and the backend responds.",
+  inspectorQuestion1:"1. What the guard looked at",inspectorQuestion2:"2. Which instruction kicked in",
+  inspectorQuestion3:"3. Why",inspectorQuestion4:"4. What it decided",inspectorQuestion5:"5. How I fixed it",
+  inspectedLabel:"Checked field",decisionText:"Decision",traceText:"Transaction ID",headerText:"Response header",
+  engineMode:"Engine mode",scoreLabel:"Inbound score",thresholdLabel:"Threshold",
+  kickerBuild:"The build",buildTitle:"Seven phases, with proof at each stop",
+  buildLead:"The project grew from a safe door into a tested rule set. Each screenshot comes from the README and its caption stays with it.",
+  phases:[
+    {title:"The door, corridor and shop",plain:"First I built the building. One public door, a staff only corridor, and the shop behind it.",facts:["The WAF listens on 127.0.0.1:8080. Juice Shop has no published port.","modsecurity/main.conf fixed the include order after a server setting failed in a site config."],shots:[{src:"screenshots/21-laptop-compose-ps-healthy.png",w:1880,h:165,alt:"Both containers up on my laptop, and the WAF healthy.",caption:"Both containers up on my laptop, and the WAF healthy."}]},
+    {title:"The flight recorder",plain:"Every request gets an audit line and a transaction ID, like a parcel tracking number.",facts:["The X-WFR-Transaction response header points back to its log entry.","DetectionOnly returned 200. Enforcing mode returned 403 for the same test."],shots:[{src:"screenshots/10-blocked-response.png",w:900,h:242,alt:"My WAF refusing a request with a 403 and the transaction header.",caption:"My WAF refusing the attack with a 403, and the tracking number in the X-WFR-Transaction header."},{src:"screenshots/09-detectiononly-vs-on.png",w:1046,h:224,alt:"The same request gets 200 in DetectionOnly and 403 when the WAF is on.",caption:"The same attack twice: 200 when the guard only watches, 403 when it's On."}]},
+    {title:"Writing my own rules",plain:"I wrote instructions for one header, one route, one field, and one condition at a time.",facts:["Rule 100080 first missed a lowercase marker. Adding t:lowercase closed that gap.","Rule 100090 uses a chain and t:length to limit long searches to one page."],shots:[{src:"screenshots/tutorial-03-scanner-blocked.png",w:1312,h:246,alt:"My fake scanner refused at the door.",caption:"My fake scanner refused at the door."},{src:"screenshots/tutorial-06-lowercase-gets-in.png",w:1633,h:81,alt:"The lowercase marker passed the first version of my rule.",caption:"The lowercase trick walked straight in before the fix."},{src:"screenshots/tutorial-07-rule-fixed.png",w:1112,h:946,alt:"My first rule now lowercases the name before checking it.",caption:"The fix: t:lowercase tidies the name before checking it."},{src:"screenshots/tutorial-08-lowercase-blocked.png",w:1636,h:88,alt:"The lowercase marker is blocked after the fix.",caption:"The lowercase trick is blocked now."}]},
+    {title:"Fire drills that run themselves",plain:"A written scenario says what one request should do. The runner checks the WAF and finds the matching audit entry.",facts:["HDR-001 uses the harmless WFR-Lab-Bot marker in a User-Agent header.","The first full laptop run passed 62 tests. After my rules and six scenarios, 70 passed."],scenario:true,shots:[{src:"screenshots/22-laptop-62-passed.png",w:1902,h:70,alt:"62 passed on my laptop, against the real Juice Shop.",caption:"62 passed on my laptop, against the real Juice Shop."},{src:"screenshots/tutorial-16-70-passed.png",w:1917,h:48,alt:"70 passed after I added my own two rules and their six tests.",caption:"70 passed after I added my own two rules and their six tests."}]},
+    {title:"The professional rulebook",plain:"OWASP CRS blocked five kinds of common attack checks. I then took five rules apart and wrote down what each one sees.",facts:["A match and a block are different events. Rule 949110 makes the final score decision.","The five autopsies cover SQL injection, XSS, file access, command injection, and a numeric Host header."],attacks:[["SQL injection","Writing an extra instruction on an order slip"],["Cross site scripting","Leaving a note in a guest book that affects the next reader"],["Path traversal","Asking a receptionist to take you beyond the archive"],["Command injection","Adding an unauthorized instruction to a pizza order"],["Scanner","Walking in with a known scanner name on an ID card"]],shots:[{src:"screenshots/13-crs-controls.png",w:1351,h:280,alt:"Every attack from the table, blocked by CRS.",caption:"Every attack from the table, blocked by CRS."}]},
+    {title:"Penalty points",plain:"Most CRS rules add points. The referee compares the total with the threshold and decides whether to deny.",facts:["A bare numeric Host adds 3 points and stays allowed. An empty User Agent adds 2 more, reaching 5.","At 10, several single rule checks that scored 5 were allowed."],shots:[{src:"screenshots/14-threshold-10.png",w:1351,h:443,alt:"With the limit at 10, several attacks walk through.",caption:"With the limit at 10, these attacks walk straight through."}]},
+    {title:"A real false alarm, fixed narrowly",plain:"A customer pasted a newsletter link into a comment. Rule 932235 mistook part of that link for a command.",facts:["I excluded one rule from one field on one route. Four controls kept other checks active.","I also fixed a CRS method setting and narrowed my own broad rule after it blocked a normal search."],shots:[{src:"screenshots/15-fp001-before.png",w:2079,h:273,alt:"A customer's newsletter link, blocked as command injection.",caption:"A customer's newsletter link, blocked as command injection."},{src:"screenshots/16-fp001-after.png",w:1101,h:254,alt:"After my fix, the comment goes through and all four controls hold.",caption:"After my fix: the comment goes through, and all four controls still hold."}]}
+  ],
+  scenarioTitle:"One safe drill, written down",
+  scenarioText:"HDR-001 checks that a harmless lab marker in the User-Agent is refused with status 403 by rule 100001.",
+  kickerRule:"Anatomy of a rule",ruleTitle:"Read the bouncer's card",
+  ruleLead:"Tap or focus a piece of the real rule. Each part answers one practical question.",
+  ruleParts:{
+    directive:"The instruction begins here. Every ModSecurity rule starts with SecRule.",
+    target:"Where to look. The User-Agent is a name card sent in the request headers.",
+    operator:"What to look for. The operator checks whether the marker appears anywhere in the header.",
+    actions:"When and what to do. Rule 100080 checks phase 1, denies, returns 403, logs the match, and checks the received text as it arrived."
+  },
+  bouncerVersion:"Bouncer version",lowercaseToggle:"Add the lowercase transformation",
+  markerAllowed:"Before the fix, lowercase passed with 200.",markerBlocked:"After the fix, lowercase is refused with 403.",
+  kickerSimulator:"Penalty points",simTitle:"Try the anomaly score",
+  simLead:"CRS adds severity points. Move the signals and threshold to see the referee rule make its decision.",
+  pickSignals:"Choose signals",bareIp:"A bare numeric Host address",emptyAgent:"An empty User-Agent header",seriousRule:"One serious rule match",
+  refereeRule:"The referee rule",refereeText:"Rule 949110 adds the active points and denies when the total reaches the threshold.",
+  totalScore:"Points / limit",simLogged:"Logged and allowed",simBlocked:"Blocked",simAllowed:"Allowed, no score",
+  underThreshold:"The score stays below the limit. It is logged and allowed.",
+  atThreshold:"The score reaches the limit. Rule 949110 denies the request.",
+  thresholdTen:"At 10, the login bypass, the SQL injection check in product search, and the sqlmap scanner check each score 5 and get through.",
+  thresholdLesson:"The threshold is not a tuning knob for false alarms. It switches off detection for every attack that trips exactly one serious rule.",
+  kickerOwnRules:"The rules I wrote",ownRulesTitle:"Small rules, one lesson each",
+  ownRulesLead:"These local rules stay separate from the professional rulebook. Rules 100080 and 100090 were my first solo laps.",
+  rules:[
+    {id:"100001",what:"Blocks a harmless lab marker in the User-Agent.",lesson:"Phase 1, one header, and exact case handling."},
+    {id:"100010",what:"Refuses WebDAV methods with status 405.",lesson:"An exact method check avoids blocking a method with a similar name."},
+    {id:"100020",what:"Virtually patches the exposed /ftp route.",lesson:"Normalize case and paths before the route check."},
+    {id:"100030",what:"Blocks a marker in one named argument.",lesson:"JSON fields become named arguments after body parsing."},
+    {id:"100040",what:"Logs the simple /ftp check for comparison.",lesson:"A control rule makes the transformation lesson visible."},
+    {id:"100050",what:"Checks a complete database command, not a word fragment.",lesson:"My own rules need false positive tests too."},
+    {id:"100060",what:"Blocks DELETE on the feedback route.",lesson:"A chain requires both conditions to be true."},
+    {id:"100070",what:"Adds five points in phase 2 after CRS initializes scoring.",lesson:"The same logic only works at the right time."},
+    {id:"100071",what:"Adds five points in phase 1 before CRS resets scoring.",lesson:"A correct rule can still do nothing in the wrong phase."},
+    {id:"100080",what:"Blocks my scanner marker in any letter case.",lesson:"My first rule from zero, with a lowercase transformation.",solo:true},
+    {id:"100090",what:"Blocks searches longer than 100 characters on one route.",lesson:"A chain and t:length compare the size of a value.",solo:true}
+  ],
+  soloLaps:"My first solo laps",tutorialLink:"Read the rule tutorial",
+  kickerLessons:"What I learned",lessonsTitle:"The lessons I keep",
+  lessons:[
+    ["A match is not a block","In CRS, rule 949110 is the referee that denies after adding the score."],
+    ["Timing matters","A rule can be right and still miss the moment when its value exists."],
+    ["Cleaning changes the match","Transformations can turn a case trick into the same name."],
+    ["The threshold changes detection","Raising it can let every one rule, five point attack through."],
+    ["Keep a fix narrow","Let the honest request through and keep the control request blocked."],
+    ["Write down the proof","A flight recorder turns I think it works into a transaction you can inspect."]
+  ],
+  kickerTime:"Time taken",timeTitle:"From idea to evidence",
+  timeline:[
+    ["21 Sep 2026","I chose to run a real WAF instead of building one from scratch."],
+    ["22 to 30 Sep 2026","I planned the tools, phases, and evidence around school and work."],
+    ["1 Oct 2026, morning","The lab, first rules, scenarios, and CI pipeline went up."],
+    ["1 Oct 2026, afternoon and evening","I ran it locally, then wrote and fixed two rules. The suite reached 70 passing tests."],
+    ["3 to 7 Oct 2026","I finished the documentation and screenshots."]
+  ],
+  longDay:"About two weeks passed from idea to finished repository, but the hands on build fit into one long day.",
+  kickerRun:"Run it yourself",runTitle:"Try the lab on your computer",
+  runLead:"Start Docker Desktop first. The commands below build the lab, run its scenarios, then stop it. Copy a block with its button.",
+  windows:"Windows PowerShell",macLinux:"Mac or Linux",setupBlock:"Build, test, stop",pokeBlock:"Poke it by hand",
+  copyButton:"Copy commands",copied:"Copied",copyFailed:"Copy was not available in this browser.",
+  setupCommands:[
+    ["git clone https://github.com/albeen-sknight/waf-flight-recorder.git","# Download a copy of this project to your computer."],
+    ["cd waf-flight-recorder","# Move into the project folder."],
+    ["docker compose up -d --build","# Build the WAF, download Juice Shop, and start both. Then open http://localhost:8080"],
+    ["docker compose --profile test run --rm tests","# Run every test scenario against the live WAF. It should end with passed."],
+    ["docker compose down","# Stop and remove the lab. Your logs stay in evidence/raw/."]
+  ],
+  pokePowershell:[
+    ["curl.exe -s -o NUL -w \"%{http_code}\\n\" \"http://localhost:8080/rest/products/search?q=apple\"","# A normal search. Expect 200."],
+    ["curl.exe -s -o NUL -w \"%{http_code}\\n\" -A \"WFR-Lab-Bot/1.0\" http://localhost:8080/","# This harmless lab marker is caught by rule 100001. Expect 403."]
+  ],
+  pokeBash:[
+    ["curl -s -o /dev/null -w \"%{http_code}\\n\" \"http://localhost:8080/rest/products/search?q=apple\"","# A normal search. Expect 200."],
+    ["curl -s -o /dev/null -w \"%{http_code}\\n\" -A \"WFR-Lab-Bot/1.0\" http://localhost:8080/","# This harmless lab marker is caught by rule 100001. Expect 403."]
+  ],
+  safetyTitle:"Safety",safety:[
+    "Juice Shop sits on an internal Docker network with no published port.",
+    "The WAF listens on 127.0.0.1, so other computers on the network cannot reach it.",
+    "The scenario runner refuses destinations outside the lab.",
+    "The data is synthetic. Every published log sample is cleaned."
+  ],
+  kickerBridge:"One company, two projects",bridgeTitle:"One firewall, one detection chain",
+  bridgeLead:"WAF Flight Recorder protects WEB01, the web shop of Limonada S.L. Its firewall log flows into the SOC in a Box Splunk instance. D10 detects many blocks from one source on one page followed by a success, then pages my phone.",
+  bridgeAttacker:"ATTACKER",bridgeAttack:"Hammers the web shop form",
+  bridgeWeb01:"WEB01",bridgeShop:"Limonada S.L. web shop, protected by WAF Flight Recorder",
+  bridgeLog:"FIREWALL LOG",bridgeLogFlow:"Flows from WEB01 into the SOC",
+  bridgeDetection:"Many blocks from one source on one page, then a success",
+  bridgePhone:"PHONE",bridgePage:"D10 pages the phone",
+  seeSoc:"See SOC in a Box",socRepo:"SOC in a Box on GitHub",
+  kickerRoadmap:"What's next",roadmapTitle:"The road from here",
+  roadmap:[
+    ["MVP","Done","done"],["V1","Done","done"],["FP-003","Planned","planned"],["Cloudflare Tunnel demo","Planned","planned"],["V2","Planned","planned"]
+  ],
+  kickerGlossary:"Glossary",glossaryTitle:"Security terms in plain words",glossarySearch:"Search the glossary",
+  glossary:[
+    ["WAF","A guard at a website's door that checks every visitor."],
+    ["Reverse proxy","A receptionist. Visitors talk to it, never directly to the back office."],
+    ["ModSecurity","The engine that runs the WAF rules."],
+    ["CRS","The professional OWASP Core Rule Set."],
+    ["Rule","An instruction about where to look, what to look for, when, and what to do."],
+    ["Phase","The moment a rule runs, from request headers to the final log."],
+    ["Operator","The comparison a rule uses, such as contains or exactly equals."],
+    ["Transformation","Cleaning a value before a rule compares it."],
+    ["Anomaly score","Penalty points added by matching rules."],
+    ["Threshold","The point limit that triggers a block."],
+    ["Paranoia level","How strict the CRS rule set is configured to be."],
+    ["DetectionOnly","Record rule matches without stopping the request."],
+    ["False positive","An honest request that the WAF blocks by mistake."],
+    ["Exclusion","A narrow exception that changes how one rule applies."],
+    ["Virtual patch","A WAF rule that covers an application hole until it is fixed."],
+    ["Audit log","The flight recorder, with one entry for each request."],
+    ["Transaction ID","The tracking number that connects a response and its log entry."],
+    ["Scenario","One written test with a request and an expected result."],
+    ["CI","A robot that rebuilds the lab and reruns the checks after a change."],
+    ["Container","A lunchbox holding an app and what it needs to run."]
+  ],
+  kickerLearn:"How I learned it",learnTitle:"A driving instructor with dual controls",
+  learnFirst:"I used Claude Code, an AI coding assistant, as my tutor. It helped set up the containers, tests, and GitHub pipeline, and drafted the first rules and docs.",
+  learnSecond:"Think of a driving instructor with dual controls. The instructor got the car onto the road. I learned to drive it, tested my own rules, and kept the evidence.",
+  tutorAlt:"Two steering wheels in a driving lesson, one for Albeen and one for a tutor.",
+  aboutTitle:"About me",aboutFirst:"I'm Albeen, 19, from Madrid, and in my second year of ASIR, network systems administration.",
+  aboutSecond:"I completed Deloitte's Technology Trainee program on the CyberSOC track in May 2026. My plan is SOC first, strong foundations first, application security and WAF later.",
+  whyTitle:"Why I built it",whyText:"I wanted proof that I could deploy a WAF, explain its decisions, and tune it without weakening the protection.",
+  profileLink:"My GitHub profile",moreProjects:"More projects",repoLink:"WAF Flight Recorder on GitHub",
+  footerNote:"Synthetic data only. Every log sample is cleaned before it's published.",
+  referencesTitle:"References",modsecurityReference:"ModSecurity Reference Manual",
+  liveShowcase:"Live showcase: https://albeen-sknight.github.io/waf-flight-recorder/",
+  closeImage:"Close image",
+  shot14:"With the limit at 10, these attacks walk straight through.",shot14Alt:"The threshold 10 experiment results.",
+  phaseCaption:"Evidence from the README",
+  themeLightLabel:"Light",themeDarkLabel:"Dark"
+};
+
+const es = {
+  title:"WAF Flight Recorder | Petición, regla y prueba",
+  description:"Un laboratorio real de ModSecurity delante de OWASP Juice Shop, con reglas propias, registros, falsos positivos corregidos y pruebas de regresión.",
+  ogDescription:"Un cortafuegos de aplicaciones real, sus reglas y las pruebas detrás de cada decisión.",
+  skip:"Saltar a la historia",languageControl:"Elige el idioma de la página",english:"Inglés",spanish:"Español",themeButton:"Cambiar el tema",
+  themeDark:"Oscuro",themeLight:"Claro",brandMark:"Marca naranja de la caja negra",brandline:"Un laboratorio de seguridad, registrado",
+  ciLink:"Ver el flujo de integración continua del laboratorio WAF",ciAlt:"Estado de GitHub Actions del laboratorio WAF",
+  requestExamples:"Ejemplos de peticiones",sampleReplay:"Repetición de muestra del registro",securityTerms:"Términos de seguridad",
+  projectLinks:"Enlaces a proyectos",referencesNav:"Referencias",
+  thresholdShot:"Abrir la captura del experimento con límite diez",localReplay:"REPETICIÓN LOCAL",
+  platformControl:"Elige la plataforma de comandos",scoreBar:"Puntuación actual comparada con el límite",thresholdSlider:"Elige el límite de anomalía",
+  methodLabel:"MÉTODO",pathLabel:"RUTA",parametersLabel:"PARÁMETROS",headersLabel:"CABECERAS",bodyLabel:"CUERPO",
+  archClientDetail:"navegador o pruebas",layerEngine:"MOTOR",layerRulebook:"CONJUNTO DE REGLAS",layerMyRules:"MIS REGLAS",
+  termWaf:"WAF",termModSecurity:"ModSecurity",termCrs:"CRS",termFalsePositive:"Falso positivo",
+  termExclusion:"Exclusión",termAnomaly:"Puntuación de anomalía",termThreshold:"Límite",termAudit:"Log de auditoría",
+  defAudit:"La caja negra, con una entrada por petición.",
+  defWaf:"Un guardia en la puerta de una web que comprueba a cada visitante.",
+  defModSecurity:"El motor que ejecuta las reglas del WAF.",defCrs:"El conjunto profesional de reglas de OWASP.",
+  defFalsePositive:"Una petición honesta que el WAF bloquea por error.",defExclusion:"Una excepción concreta que cambia cómo se aplica una regla.",
+  defAnomaly:"Los puntos que suman las reglas que coinciden.",defThreshold:"La puntuación a partir de la que se bloquea.",
+  attackName:"Tipo de ataque",everydayVersion:"Versión cotidiana",resultBlocked:"Resultado",blockedByCrs:"Bloqueado por CRS",
+  autopsy942:"Analizador de SQL",autopsy941:"Seis pasos de decodificación",autopsy930:"Nombres de archivos sensibles",
+  autopsy932:"La regla del falso positivo",autopsy920:"Tres puntos, permitida",
+  lazyHeading:"Tres atajos tentadores",controlsHeading:"Cuatro controles que siguieron bloqueados",
+  lazyFixes:["Eliminar la regla.","Ignorar el campo de comentario en todas partes.","Subir el límite."],
+  fourControls:["Un comando que intenta leer un archivo del sistema en el mismo campo.","Contenido de script en el mismo campo.","El mismo patrón de comando en otro campo.","El mismo comentario en otra ruta."],
+  themeButtonLight:"Cambiar al tema claro",themeButtonDark:"Cambiar al tema oscuro",
+  heroEyebrow:"Una petición llega a un cortafuegos de aplicaciones real",
+  hook:"Puse un cortafuegos de aplicaciones real delante de una tienda rota a propósito. Lo puse a prueba, escribí mis propias reglas, las rompí, encontré un fallo en el conjunto oficial y lo corregí sin abrir un agujero.",
+  proofLead:"La promesa de prueba.",proof:"Cada afirmación tiene una línea de log detrás y una prueba que falla en cuanto deja de cumplirse.",
+  readStory:"Lee la historia",sendRequest:"Enviar una petición",viewGithub:"Ver en GitHub",ciCaption:"Comprobaciones del laboratorio en cada cambio",
+  sceneTitle:"Las peticiones pasan por una puerta antes de llegar a la tienda",sceneDescription:"Una búsqueda normal y un cambio de cesta pasan. Una petición de comentarios se detiene en el WAF y recibe un 403. La franja registra cada ejemplo.",
+  arrivals:"PETICIONES ENTRANTES",guardLabel:"WAF",shopLabel:"JUICE SHOP",heroCardOne:"Búsqueda normal",heroCardTwo:"Comentario antes del arreglo",heroCardThree:"Cambio en la cesta",
+  tapeLabel:"REGISTRO, UNA LÍNEA POR PETICIÓN",replayNote:"El botón repite un ejemplo seguro en esta ilustración. No se conecta a un WAF activo.",
+  replaySafe:"Ejemplo seguro repetido en la ilustración. No se ha enviado a un servidor.",
+  sceneAlternative:"Una tienda animada, una puerta WAF, peticiones verdes permitidas, una petición roja bloqueada y una franja de registro.",
+  kickerPicture:"La imagen completa",pictureTitle:"Una tienda, un guardia y una caja negra",
+  pictureLead:"Todo el laboratorio cabe en una imagen. La tienda es vulnerable a propósito, el WAF está en su única puerta pública y la caja guarda las pruebas.",
+  shopIcon:"Dibujo de una tienda",guardIcon:"Dibujo de una puerta",boxIcon:"Dibujo de una caja de registro",
+  shopCardTitle:"La tienda",shopCardText:"OWASP Juice Shop tiene agujeros a propósito para aprender de forma segura. Esta copia funciona dentro del laboratorio.",
+  guardCardTitle:"El guardia",guardCardText:"ModSecurity ejecuta OWASP CRS y mis propias reglas. Comprueba una petición antes de que la vea la tienda.",
+  boxCardTitle:"La caja negra",boxCardText:"Un registro de auditoría JSON guarda cada transacción. Una cabecera de respuesta incluye su número de seguimiento.",
+  learningLab:"Es un laboratorio de aprendizaje. No protege nada real.",
+  kickerQuestions:"Cinco preguntas",questionsTitle:"Lo que pregunto de cada petición",
+  questionsLead:"La consola de abajo permite seguir las pruebas en el mismo orden, desde lo que vio el guardia hasta un arreglo concreto.",
+  q1:"¿Qué miró el guardia?",q2:"¿Qué instrucción se activó?",q3:"¿Por qué coincidió?",q4:"¿Qué decidió?",q5:"¿Cómo corrijo un error sin debilitar la protección?",
+  kickerConversation:"La hoja del pedido",conversationTitle:"Cómo funciona una conversación web",
+  conversationLead:"Una petición web se parece a pedir en la barra de un restaurante. Toca una línea para ver su versión de restaurante y de web.",
+  orderSlip:"UNA PETICIÓN",anatomyControl:"Elige una parte de la petición",bodyExample:"Un formulario cumplimentado, si lo hay",
+  restaurantVersion:"En el restaurante",websiteVersion:"En la web",
+  anatomy:{
+    method:["Qué quieres hacer","GET pide ver algo. POST envía algo nuevo."],
+    path:["A qué mostrador vas","La página o el servicio que recibe la petición."],
+    parameters:["Los detalles del pedido","Información adicional después del signo de interrogación en la dirección."],
+    headers:["La tarjeta que enseñas","Datos como el nombre del navegador, las cookies y de dónde vienes."],
+    body:["El formulario cumplimentado","Datos que se envían con una petición, como un formulario de acceso."]
+  },
+  statusCodesTitle:"La respuesta llega como un código de estado",
+  statuses:[
+    ["200","Aquí tienes la comida","Todo está bien"],
+    ["201","Pedido recibido","Se ha creado algo nuevo"],
+    ["401","Enséñame tu tarjeta de socio","Tienes que iniciar sesión"],
+    ["403","No puedes pasar","La petición se ha rechazado"],
+    ["404","No tenemos ese plato","Esa página no existe"]
+  ],
+  kickerSetup:"La instalación",setupTitle:"Una puerta, un pasillo y una tienda",
+  setupLead:"Docker conecta el navegador o el ejecutor de pruebas con un WAF local. Solo las peticiones permitidas llegan a Juice Shop. La tienda no publica ningún puerto.",
+  archTitle:"La arquitectura del laboratorio",archDescription:"El navegador o el ejecutor va al puerto 8080 de localhost, después a Apache con ModSecurity y OWASP CRS, y luego a Juice Shop en una red interna de Docker. El WAF escribe audit.json.",
+  archClient:"Navegador o pruebas",hostOnly:"solo este ordenador",internalOnly:"solo red interna",oneLinePerRequest:"una línea por petición",
+  engineLayer:"El motor del guardia lee la petición y sigue sus instrucciones.",
+  crsLayer:"Un conjunto profesional mantenido, fijado en una versión y sin editar.",
+  myLayer:"Reglas locales y excepciones concretas, separadas de CRS.",
+  dockerNote:"Docker es como una caja de comida. Cada aplicación lleva lo que necesita y el archivo compose indica cómo se conectan las cajas.",
+  kickerConsole:"La pieza central",consoleTitle:"Repite el registro de vuelo",
+  consoleLead:"Son entradas reales y depuradas de evidence/sanitized-samples. Elige una fila y sigue las cinco preguntas. La lista no muestra parámetros de dirección.",
+  consoleIntro:"Elige una transacción para inspeccionar sus campos, mensajes de reglas, puntuación, decisión y arreglo.",
+  sampleBadge:"15 MUESTRAS DEPURADAS",recordList:"Muestras de transacciones depuradas",
+  record:{
+    fpBefore:"FP 001, antes del arreglo",fpAfter:"FP 001, después del arreglo",fpControl:"FP 001, control de seguridad",
+    basketBeforePut:"FP 002, cambio de cesta antes",basketBeforeDelete:"FP 002, quitar de la cesta antes",basketAfterPut:"FP 002, cambio de cesta después",
+    labBeforeCough:"Lab F, tos antes del arreglo",labAfterCough:"Lab F, tos después del arreglo",labBeforeControl:"Lab F, control de base de datos antes",labAfterControl:"Lab F, control de base de datos después",
+    searchBlocked:"Prueba de búsqueda, WAF activo",searchWatch:"Prueba de búsqueda, DetectionOnly",numericHost:"Dirección numérica, bajo el límite",
+    loginFive:"Comprobación de acceso, límite 5",loginTen:"Comprobación de acceso, límite 10"
+  },
+  allowed:"PERMITIDA",blocked:"BLOQUEADA",loggedAllowed:"REGISTRADA, PERMITIDA",compareLabel:"Comparar el cambio de ajuste",
+  before:"Antes",after:"Después",sourceSample:"Abrir esta muestra depurada en GitHub",notTuned:"Esta entrada prueba una decisión. En el repositorio están las notas de la regla correspondiente.",
+  noMatch:"No coincidió ninguna regla. La petición llegó a la aplicación.",
+  fieldComment:"El campo de comentario del JSON",fieldMethod:"El método HTTP",fieldSearch:"El campo de búsqueda en los parámetros",
+  fieldHost:"La cabecera Host",fieldEmail:"El campo de correo del JSON",
+  safeFpValue:"The link https://example.com/?ref=juice&utm_source=mail in your newsletter has a typo",
+  safeBasketValue:"{\"quantity\": 2}",safeCoughValue:"q: cough drops",
+  contentFp:"Un cliente pegó un enlace del boletín en el comentario de sus opiniones.",
+  contentControl:"El comentario intenta ejecutar un comando que lee un archivo del sistema. La página solo muestra esta descripción.",
+  contentBasket:"La tienda pide cambiar la cantidad de un producto de la cesta.",
+  contentDelete:"La tienda pide quitar un producto de la cesta.",
+  contentCough:"Un cliente busca pastillas para la tos en los productos.",
+  contentDropControl:"El texto de búsqueda contiene una orden de base de datos. El texto exacto no aparece en esta página.",
+  contentSqlSearch:"El campo de búsqueda contiene un atajo para acceder a la base de datos. El texto exacto no aparece en esta página.",
+  contentNumeric:"La petición usó una dirección numérica en la cabecera Host.",
+  contentEmail:"El campo de correo intenta saltarse el control normal de acceso. El texto exacto no aparece en esta página.",
+  whyFp:"La regla 932235 busca una forma parecida a un comando. El enlace del boletín incluye por casualidad partes que reconoce, aunque el cliente solo comparte una dirección.",
+  whyFpAfter:"La exclusión en tiempo de ejecución afecta a una regla, un campo de comentario y una ruta. Las demás comprobaciones CRS siguen activas.",
+  whyControl:"La exclusión solo quita la regla 932235 del campo de comentario en esta ruta. Otras reglas CRS siguen detectando un comando que intenta leer un archivo del sistema.",
+  whyBasket:"CRS solo permitía sus métodos más habituales. Juice Shop usa PUT y DELETE para la cesta, así que había que ampliar la lista de métodos de la aplicación.",
+  whyBasketAfter:"La lista permitida ahora contempla las acciones de la cesta. Otras reglas locales siguen rechazando WebDAV y DELETE en opiniones.",
+  whyLabBefore:"La primera versión buscaba un fragmento dentro de cualquier palabra. Marcó como sospechoso el nombre normal de un producto.",
+  whyLabAfter:"La versión más precisa comprueba palabras completas y el tipo de objeto que viene después. La búsqueda normal pasa.",
+  whyLabControl:"La regla más precisa sigue bloqueando una orden de base de datos. La prueba de control continúa en la regresión.",
+  whySqli:"La regla CRS 942100 usa libinjection para reconocer entradas con forma de SQL. La regla 949110 compara sus cinco puntos con el límite de cinco.",
+  whyDetection:"DetectionOnly registra la coincidencia y la puntuación, pero no aplica el bloqueo. El servidor devuelve 200.",
+  whyHost:"La regla 920350 suma tres puntos WARNING. Tres está por debajo del límite de cinco, así que la petición se registra y se permite.",
+  whyLoginFive:"Una coincidencia CRITICAL suma cinco puntos. Con un límite de cinco, la regla 949110 rechaza la petición.",
+  whyLoginTen:"La misma regla suma cinco puntos. Con un límite de diez, queda registrada pero no se rechaza, y responde la aplicación.",
+  inspectorQuestion1:"1. Qué miró el guardia",inspectorQuestion2:"2. Qué instrucción se activó",
+  inspectorQuestion3:"3. Por qué",inspectorQuestion4:"4. Qué decidió",inspectorQuestion5:"5. Cómo lo corregí",
+  inspectedLabel:"Campo comprobado",decisionText:"Decisión",traceText:"ID de transacción",headerText:"Cabecera de respuesta",
+  engineMode:"Modo del motor",scoreLabel:"Puntuación entrante",thresholdLabel:"Límite",
+  kickerBuild:"La construcción",buildTitle:"Siete fases, con pruebas en cada parada",
+  buildLead:"El proyecto pasó de una puerta segura a un conjunto de reglas probado. Cada captura viene del README y conserva su pie.",
+  phases:[
+    {title:"La puerta, el pasillo y la tienda",plain:"Primero construí el edificio. Una puerta pública, un pasillo solo para el personal y la tienda detrás.",facts:["El WAF escucha en 127.0.0.1:8080. Juice Shop no publica ningún puerto.","modsecurity/main.conf fijó el orden de carga tras fallar un ajuste del servidor dentro de la configuración de un sitio."],shots:[{src:"screenshots/21-laptop-compose-ps-healthy.png",w:1880,h:165,alt:"Los dos contenedores están activos y el WAF funciona.",caption:"Los dos contenedores están activos y el WAF funciona."}]},
+    {title:"El registro de vuelo",plain:"Cada petición recibe una línea de auditoría y un ID de transacción, como el seguimiento de un paquete.",facts:["La cabecera X-WFR-Transaction de la respuesta apunta a su entrada de log.","DetectionOnly devolvió 200. El modo de bloqueo devolvió 403 para la misma prueba."],shots:[{src:"screenshots/10-blocked-response.png",w:900,h:242,alt:"Mi WAF rechaza una petición con 403 y la cabecera de transacción.",caption:"Mi WAF rechazó la prueba con 403 y añadió el número de seguimiento X-WFR-Transaction."},{src:"screenshots/09-detectiononly-vs-on.png",w:1046,h:224,alt:"La misma petición obtiene 200 en DetectionOnly y 403 con el WAF activo.",caption:"La misma prueba dos veces: 200 cuando el guardia solo observa y 403 cuando está activo."}]},
+    {title:"Escribí mis propias reglas",plain:"Escribí instrucciones para una cabecera, una ruta, un campo y una condición cada vez.",facts:["La regla 100080 dejó pasar un marcador en minúsculas al principio. Añadir t:lowercase cerró ese hueco.","La regla 100090 usa una cadena y t:length para limitar las búsquedas largas a una página."],shots:[{src:"screenshots/tutorial-03-scanner-blocked.png",w:1312,h:246,alt:"Mi marcador de prueba no pudo pasar.",caption:"Mi marcador de prueba no pudo pasar."},{src:"screenshots/tutorial-06-lowercase-gets-in.png",w:1633,h:81,alt:"El marcador en minúsculas pasó la primera versión de la regla.",caption:"El cambio de mayúsculas a minúsculas pasó antes del arreglo."},{src:"screenshots/tutorial-07-rule-fixed.png",w:1112,h:946,alt:"Mi primera regla pasa el texto a minúsculas antes de comprobarlo.",caption:"El arreglo: t:lowercase cambia el nombre antes de comprobarlo."},{src:"screenshots/tutorial-08-lowercase-blocked.png",w:1636,h:88,alt:"El marcador en minúsculas queda bloqueado después del arreglo.",caption:"El marcador en minúsculas queda bloqueado."}]},
+    {title:"Simulacros que se ejecutan solos",plain:"Un escenario escrito dice qué debería pasar con una petición. El ejecutor comprueba el WAF y encuentra su entrada de auditoría.",facts:["HDR-001 usa el marcador inofensivo WFR-Lab-Bot en una cabecera User-Agent.","La primera ejecución completa en el portátil pasó 62 pruebas. Con mis reglas y seis escenarios, pasó 70."],scenario:true,shots:[{src:"screenshots/22-laptop-62-passed.png",w:1902,h:70,alt:"62 pruebas pasaron en mi portátil con Juice Shop real.",caption:"62 pruebas pasaron en mi portátil, contra Juice Shop real."},{src:"screenshots/tutorial-16-70-passed.png",w:1917,h:48,alt:"70 pruebas pasaron al añadir dos reglas y seis escenarios.",caption:"70 pruebas pasaron al añadir mis dos reglas y sus seis escenarios."}]},
+    {title:"El conjunto profesional de reglas",plain:"OWASP CRS bloqueó cinco tipos de pruebas de ataques comunes. Después analicé cinco reglas y anoté qué ve cada una.",facts:["Una coincidencia y un bloqueo son cosas distintas. La regla 949110 toma la decisión final con la puntuación.","Los cinco análisis cubren inyección SQL, XSS, acceso a archivos, inyección de comandos y una cabecera Host numérica."],attacks:[["Inyección SQL","Añadir una instrucción extra a una comanda"],["Cross site scripting","Dejar una nota en el libro de visitas que afecta al siguiente lector"],["Recorrido de directorios","Pedir a recepción que te lleve más allá del archivo"],["Inyección de comandos","Añadir una instrucción no autorizada a un pedido de pizza"],["Escáner","Llegar con un nombre de escáner conocido en la tarjeta"]],shots:[{src:"screenshots/13-crs-controls.png",w:1351,h:280,alt:"Todas las pruebas de la tabla quedan bloqueadas por CRS.",caption:"Todas las pruebas de la tabla quedan bloqueadas por CRS."}]},
+    {title:"Puntos de penalización",plain:"La mayoría de reglas CRS suman puntos. El árbitro compara el total con el límite y decide si rechaza.",facts:["Una cabecera Host numérica suma 3 puntos y se permite. Un User-Agent vacío añade 2 y llega a 5.","Con límite 10, se permitieron varias pruebas de una sola regla que sumaban 5."],shots:[{src:"screenshots/14-threshold-10.png",w:1351,h:443,alt:"Con el límite en 10, varias pruebas pasan.",caption:"Con el límite en 10, varias pruebas pasan."}]},
+    {title:"Un falso positivo real, corregido con precisión",plain:"Un cliente pegó un enlace del boletín en un comentario. La regla 932235 confundió parte del enlace con un comando.",facts:["Excluí una regla de un campo en una ruta. Cuatro controles mantuvieron activas las demás comprobaciones.","También corregí un ajuste de métodos de CRS y afiné mi propia regla después de bloquear una búsqueda normal."],shots:[{src:"screenshots/15-fp001-before.png",w:2079,h:273,alt:"El enlace del boletín de un cliente fue bloqueado como inyección de comandos.",caption:"El enlace del boletín de un cliente fue bloqueado como inyección de comandos."},{src:"screenshots/16-fp001-after.png",w:1101,h:254,alt:"Tras el arreglo, pasa el comentario y se mantienen los cuatro controles.",caption:"Tras el arreglo, pasa el comentario y se mantienen los cuatro controles."}]}
+  ],
+  scenarioTitle:"Un simulacro seguro por escrito",
+  scenarioText:"HDR-001 comprueba que un marcador inofensivo del laboratorio en User-Agent se rechaza con estado 403 por la regla 100001.",
+  kickerRule:"Anatomía de una regla",ruleTitle:"Lee la tarjeta del portero",
+  ruleLead:"Toca o enfoca una parte de la regla real. Cada pieza responde a una pregunta práctica.",
+  ruleParts:{
+    directive:"Aquí empieza la instrucción. Toda regla de ModSecurity empieza con SecRule.",
+    target:"Dónde mirar. User-Agent es una tarjeta con el nombre que llega en las cabeceras.",
+    operator:"Qué buscar. El operador comprueba si el marcador aparece en algún lugar de la cabecera.",
+    actions:"Cuándo y qué hacer. La regla 100080 comprueba en fase 1, rechaza, devuelve 403, registra la coincidencia y revisa el texto recibido tal cual."
+  },
+  bouncerVersion:"La versión del portero",lowercaseToggle:"Añadir la transformación a minúsculas",
+  markerAllowed:"Antes del arreglo, las minúsculas pasaban con 200.",markerBlocked:"Después del arreglo, las minúsculas se rechazan con 403.",
+  kickerSimulator:"Puntos de penalización",simTitle:"Prueba la puntuación de anomalía",
+  simLead:"CRS suma puntos según la gravedad. Cambia las señales y el límite para ver la decisión de la regla árbitro.",
+  pickSignals:"Elige señales",bareIp:"Una dirección numérica sin nombre",emptyAgent:"Una cabecera User-Agent vacía",seriousRule:"Una regla grave coincide",
+  refereeRule:"La regla árbitro",refereeText:"La regla 949110 suma los puntos activos y rechaza cuando el total alcanza el límite.",
+  totalScore:"Puntos / límite",simLogged:"Registrada y permitida",simBlocked:"Bloqueada",simAllowed:"Permitida, sin puntos",
+  underThreshold:"La puntuación queda por debajo del límite. Se registra y se permite.",
+  atThreshold:"La puntuación alcanza el límite. La regla 949110 rechaza la petición.",
+  thresholdTen:"Con 10, pasan el acceso por atajo, el control de inyección SQL en la búsqueda y el control del escáner sqlmap, cada uno con 5 puntos.",
+  thresholdLesson:"El límite no sirve para ajustar falsos positivos. Desactiva la detección de cualquier ataque que active una sola regla grave.",
+  kickerOwnRules:"Las reglas que escribí",ownRulesTitle:"Reglas pequeñas, una lección cada una",
+  ownRulesLead:"Estas reglas locales siguen separadas del conjunto profesional. Las reglas 100080 y 100090 fueron mis primeras vueltas en solitario.",
+  rules:[
+    {id:"100001",what:"Bloquea un marcador inofensivo del laboratorio en User-Agent.",lesson:"Fase 1, una cabecera y control exacto de mayúsculas."},
+    {id:"100010",what:"Rechaza métodos WebDAV con estado 405.",lesson:"Comprobar el método exacto evita bloquear otro con nombre parecido."},
+    {id:"100020",what:"Aplica un parche virtual a la ruta expuesta /ftp.",lesson:"Normalizar mayúsculas y rutas antes de comprobar."},
+    {id:"100030",what:"Bloquea un marcador en un argumento concreto.",lesson:"Los campos JSON se convierten en argumentos con nombre al leer el cuerpo."},
+    {id:"100040",what:"Registra la comprobación sencilla de /ftp para compararla.",lesson:"Una regla de control deja ver la lección de las transformaciones."},
+    {id:"100050",what:"Comprueba una orden de base de datos completa, no un fragmento.",lesson:"Mis propias reglas también necesitan pruebas contra falsos positivos."},
+    {id:"100060",what:"Bloquea DELETE en la ruta de opiniones.",lesson:"Una cadena exige que se cumplan ambas condiciones."},
+    {id:"100070",what:"Suma cinco puntos en fase 2, después de que CRS inicie la puntuación.",lesson:"La misma lógica solo funciona en el momento adecuado."},
+    {id:"100071",what:"Suma cinco puntos en fase 1, antes de que CRS reinicie la puntuación.",lesson:"Una regla correcta puede no hacer nada en la fase equivocada."},
+    {id:"100080",what:"Bloquea mi marcador de escáner con cualquier combinación de letras.",lesson:"Mi primera regla desde cero, con una transformación a minúsculas.",solo:true},
+    {id:"100090",what:"Bloquea búsquedas de más de 100 caracteres en una ruta.",lesson:"Una cadena y t:length comparan el tamaño del valor.",solo:true}
+  ],
+  soloLaps:"Mis primeras vueltas en solitario",tutorialLink:"Lee el tutorial de reglas",
+  kickerLessons:"Lo que aprendí",lessonsTitle:"Las lecciones que me llevo",
+  lessons:[
+    ["Coincidir no es bloquear","En CRS, la regla 949110 es el árbitro que rechaza tras sumar la puntuación."],
+    ["El momento importa","Una regla puede ser correcta y aun así no encontrar el valor a tiempo."],
+    ["Limpiar cambia la comparación","Las transformaciones pueden tratar igual dos formas del mismo nombre."],
+    ["El límite cambia la detección","Subirlo puede dejar pasar cualquier ataque de una regla con cinco puntos."],
+    ["Haz el arreglo concreto","Deja pasar la petición honesta y conserva el bloqueo del control."],
+    ["Anota las pruebas","El registro convierte creo que funciona en una transacción que puedes revisar."]
+  ],
+  kickerTime:"Tiempo invertido",timeTitle:"De la idea a las pruebas",
+  timeline:[
+    ["21 Sep 2026","Decidí usar un WAF real en vez de construir uno desde cero."],
+    ["22 a 30 Sep 2026","Planifiqué las herramientas, las fases y las pruebas entre clase y trabajo."],
+    ["1 Oct 2026, mañana","Puse en marcha el laboratorio, las primeras reglas, los escenarios y CI."],
+    ["1 Oct 2026, tarde y noche","Lo ejecuté en local, escribí y corregí dos reglas. La suite llegó a 70 pruebas."],
+    ["3 a 7 Oct 2026","Terminé la documentación y las capturas."]
+  ],
+  longDay:"Pasaron unas dos semanas desde la idea hasta el repositorio terminado, pero la construcción práctica cupo en un día largo.",
+  kickerRun:"Pruébalo tú",runTitle:"Ejecuta el laboratorio en tu ordenador",
+  runLead:"Abre Docker Desktop primero. Estos comandos construyen el laboratorio, ejecutan sus escenarios y lo paran. Copia cada bloque con su botón.",
+  windows:"Windows PowerShell",macLinux:"Mac o Linux",setupBlock:"Construir, probar y parar",pokeBlock:"Probar a mano",
+  copyButton:"Copiar comandos",copied:"Copiados",copyFailed:"Este navegador no permite copiar.",
+  setupCommands:[
+    ["git clone https://github.com/albeen-sknight/waf-flight-recorder.git","# Descarga una copia de este proyecto en tu ordenador."],
+    ["cd waf-flight-recorder","# Entra en la carpeta del proyecto."],
+    ["docker compose up -d --build","# Construye el WAF, descarga Juice Shop e inicia ambos. Después abre http://localhost:8080"],
+    ["docker compose --profile test run --rm tests","# Ejecuta todos los escenarios contra el WAF activo. Debe terminar con passed."],
+    ["docker compose down","# Para y quita el laboratorio. Los logs siguen en evidence/raw/."]
+  ],
+  pokePowershell:[
+    ["curl.exe -s -o NUL -w \"%{http_code}\\n\" \"http://localhost:8080/rest/products/search?q=apple\"","# Una búsqueda normal. Se espera 200."],
+    ["curl.exe -s -o NUL -w \"%{http_code}\\n\" -A \"WFR-Lab-Bot/1.0\" http://localhost:8080/","# La regla 100001 detecta el marcador inocuo del laboratorio. Se espera 403."]
+  ],
+  pokeBash:[
+    ["curl -s -o /dev/null -w \"%{http_code}\\n\" \"http://localhost:8080/rest/products/search?q=apple\"","# Una búsqueda normal. Se espera 200."],
+    ["curl -s -o /dev/null -w \"%{http_code}\\n\" -A \"WFR-Lab-Bot/1.0\" http://localhost:8080/","# La regla 100001 detecta el marcador inocuo del laboratorio. Se espera 403."]
+  ],
+  safetyTitle:"Seguridad",safety:[
+    "Juice Shop está en una red interna de Docker y no publica ningún puerto.",
+    "El WAF escucha en 127.0.0.1, así que otros ordenadores de la red no pueden acceder.",
+    "El ejecutor de escenarios rechaza destinos que no pertenecen al laboratorio.",
+    "Los datos son sintéticos. Cada muestra de log publicada está depurada."
+  ],
+  kickerBridge:"Una empresa, dos proyectos",bridgeTitle:"Un firewall, una detección",
+  bridgeLead:"WAF Flight Recorder protege WEB01, la tienda web de Limonada S.L. Su registro de firewall llega a Splunk en SOC in a Box. D10 detecta muchos bloqueos desde un origen en una página, seguidos de una petición correcta, y avisa a mi teléfono.",
+  bridgeAttacker:"ATACANTE",bridgeAttack:"Bombardea el formulario de la tienda",
+  bridgeWeb01:"WEB01",bridgeShop:"Tienda web de Limonada S.L., protegida por WAF Flight Recorder",
+  bridgeLog:"REGISTRO DEL FIREWALL",bridgeLogFlow:"WEB01 lo envía al SOC",
+  bridgeDetection:"Muchos bloqueos desde un origen en una página, y después una petición correcta",
+  bridgePhone:"TELÉFONO",bridgePage:"D10 envía una alerta al teléfono",
+  seeSoc:"Ver SOC in a Box",socRepo:"SOC in a Box en GitHub",
+  kickerRoadmap:"Lo siguiente",roadmapTitle:"El camino que queda",
+  roadmap:[
+    ["MVP","Hecho","done"],["V1","Hecho","done"],["FP-003","Previsto","planned"],["Demo con Cloudflare Tunnel","Previsto","planned"],["V2","Previsto","planned"]
+  ],
+  kickerGlossary:"Glosario",glossaryTitle:"Términos de seguridad en palabras sencillas",glossarySearch:"Buscar en el glosario",
+  glossary:[
+    ["WAF","Un guardia en la puerta de una web que comprueba a cada visitante."],
+    ["Proxy inverso","Una recepción. Los visitantes hablan con ella, no directamente con la oficina."],
+    ["ModSecurity","El motor que ejecuta las reglas del WAF."],
+    ["CRS","El conjunto profesional de reglas de OWASP."],
+    ["Regla","Una instrucción sobre dónde mirar, qué buscar, cuándo y qué hacer."],
+    ["Fase","El momento en que se ejecuta una regla, desde las cabeceras hasta el log final."],
+    ["Operador","La comparación que usa una regla, como contiene o es exactamente igual."],
+    ["Transformación","Limpiar un valor antes de compararlo."],
+    ["Puntuación de anomalía","Los puntos que suman las reglas que coinciden."],
+    ["Límite","La puntuación a partir de la que se bloquea."],
+    ["Nivel de paranoia","La rigurosidad con la que se configura CRS."],
+    ["DetectionOnly","Registrar coincidencias sin detener la petición."],
+    ["Falso positivo","Una petición honesta que el WAF bloquea por error."],
+    ["Exclusión","Una excepción concreta que cambia cómo se aplica una regla."],
+    ["Parche virtual","Una regla WAF que cubre un fallo de la aplicación hasta que se arregle."],
+    ["Log de auditoría","El registro de vuelo, con una entrada por petición."],
+    ["ID de transacción","El número que conecta una respuesta con su línea de log."],
+    ["Escenario","Una prueba escrita con una petición y el resultado esperado."],
+    ["CI","Un robot que reconstruye el laboratorio y repite las comprobaciones tras un cambio."],
+    ["Contenedor","Una caja con una aplicación y lo que necesita para funcionar."]
+  ],
+  kickerLearn:"Cómo lo aprendí",learnTitle:"Un profesor de autoescuela con doble mando",
+  learnFirst:"Usé Claude Code, un asistente de programación con IA, como tutor. Me ayudó a preparar los contenedores, las pruebas y el pipeline de GitHub, y redactó las primeras reglas y documentos.",
+  learnSecond:"Piensa en un profesor de autoescuela con doble mando. El profesor puso el coche en carretera. Yo aprendí a conducirlo, probé mis reglas y guardé las pruebas.",
+  tutorAlt:"Dos volantes en una clase de conducción, uno para Albeen y otro para el tutor.",
+  aboutTitle:"Sobre mí",aboutFirst:"Soy Albeen, tengo 19 años, vivo en Madrid y curso segundo de ASIR, Administración de Sistemas Informáticos en Red.",
+  aboutSecond:"En mayo de 2026 hice el programa Technology Trainee de Deloitte en el itinerario CyberSOC. Mi plan es empezar por SOC, crear buenos fundamentos y pasar más adelante a seguridad de aplicaciones y WAF.",
+  whyTitle:"Por qué lo hice",whyText:"Quería demostrar que podía desplegar un WAF, explicar sus decisiones y ajustarlo sin debilitar la protección.",
+  profileLink:"Mi perfil de GitHub",moreProjects:"Más proyectos",repoLink:"WAF Flight Recorder en GitHub",
+  footerNote:"Solo datos sintéticos. Cada muestra de log se depura antes de publicarse.",
+  referencesTitle:"Referencias",modsecurityReference:"Manual de referencia de ModSecurity",
+  liveShowcase:"Web de muestra: https://albeen-sknight.github.io/waf-flight-recorder/",
+  closeImage:"Cerrar imagen",
+  shot14:"Con el límite en 10, varias pruebas pasan.",shot14Alt:"Resultados del experimento con el límite en 10.",
+  phaseCaption:"Pruebas del README",
+  themeLightLabel:"Claro",themeDarkLabel:"Oscuro"
+};
+
+const copy = {en:en, es:es};
+const records = [
+  {key:"fpBefore",file:"fp001-before-blocked-932235.json",tx:"ar4e9BdBzY3fHQgqtF7IRQAAAEE",method:"POST",path:"/api/Feedbacks/",decision:"block",status:403,phase:"2",score:5,threshold:5,mode:"ENABLED",field:"ARGS:comment",fieldKey:"fieldComment",contentKey:"contentFp",valueKey:"safeFpValue",whyKey:"whyFp",group:"FP001",rules:[["932235","Remote Command Execution: Unix Command Injection (command without evasion)"],["949110","Inbound Anomaly Score Exceeded (Total Score: 5)"]]},
+  {key:"fpAfter",file:"fp001-after-allowed.json",tx:"ar4fEqUUtpghSxT7cH4T_gAAAEA",method:"POST",path:"/api/Feedbacks/",decision:"allow",status:201,phase:"-",score:0,threshold:5,mode:"ENABLED",field:"ARGS:comment",fieldKey:"fieldComment",contentKey:"contentFp",valueKey:"safeFpValue",whyKey:"whyFpAfter",group:"FP001",rules:[]},
+  {key:"fpControl",file:"fp001-after-ctrl1-cmdi-still-blocked.json",tx:"ar4fEuafFOqhqwGVzvHc1gAAAAQ",method:"POST",path:"/api/Feedbacks/",decision:"block",status:403,phase:"2",score:10,threshold:5,mode:"ENABLED",field:"ARGS:comment",fieldKey:"fieldComment",contentKey:"contentControl",whyKey:"whyControl",rules:[["930120","OS File Access Attempt"],["932160","Remote Command Execution: Unix Shell Code Found"],["949110","Inbound Anomaly Score Exceeded (Total Score: 10)"]]},
+  {key:"basketBeforePut",file:"fp002-before-put-blocked-911100.json",tx:"ar4evr8Z9dXC7xwMdWNDswAAAEA",method:"PUT",path:"/api/BasketItems/1",decision:"block",status:403,phase:"2",score:5,threshold:5,mode:"ENABLED",field:"REQUEST_METHOD",fieldKey:"fieldMethod",contentKey:"contentBasket",valueKey:"safeBasketValue",whyKey:"whyBasket",group:"FP002",rules:[["911100","Method is not allowed by policy"],["949110","Inbound Anomaly Score Exceeded (Total Score: 5)"]]},
+  {key:"basketBeforeDelete",file:"fp002-before-delete-blocked-911100.json",tx:"ar4evr8Z9dXC7xwMdWNDtAAAAEM",method:"DELETE",path:"/api/BasketItems/1",decision:"block",status:403,phase:"2",score:5,threshold:5,mode:"ENABLED",field:"REQUEST_METHOD",fieldKey:"fieldMethod",contentKey:"contentDelete",whyKey:"whyBasket",rules:[["911100","Method is not allowed by policy"],["949110","Inbound Anomaly Score Exceeded (Total Score: 5)"]]},
+  {key:"basketAfterPut",file:"fp002-after-put-allowed.json",tx:"ar4ewpiTzDqDadGSJUJzVwAAAAE",method:"PUT",path:"/api/BasketItems/1",decision:"allow",status:200,phase:"-",score:0,threshold:5,mode:"ENABLED",field:"REQUEST_METHOD",fieldKey:"fieldMethod",contentKey:"contentBasket",valueKey:"safeBasketValue",whyKey:"whyBasketAfter",group:"FP002",rules:[]},
+  {key:"labBeforeCough",file:"labf-before-cough-drops-blocked.json",tx:"ar4eV082DEetEvXNLgvIggAAAEA",method:"GET",path:"/rest/products/search",decision:"block",status:403,phase:"2",score:0,threshold:5,mode:"ENABLED",field:"ARGS:q",fieldKey:"fieldSearch",contentKey:"contentCough",valueKey:"safeCoughValue",whyKey:"whyLabBefore",group:"LABF",rules:[["100050","WFR lab F: DROP keyword in an argument"]]},
+  {key:"labAfterCough",file:"labf-after-cough-drops-allowed.json",tx:"ar4eZ4q-3QgAuTQ_Zor6SAAAAAE",method:"GET",path:"/rest/products/search",decision:"allow",status:200,phase:"-",score:0,threshold:5,mode:"ENABLED",field:"ARGS:q",fieldKey:"fieldSearch",contentKey:"contentCough",valueKey:"safeCoughValue",whyKey:"whyLabAfter",group:"LABF",rules:[]},
+  {key:"labBeforeControl",file:"labf-before-drop-table-blocked.json",tx:"ar4eV-XSIiJAFGquetfsfAAAAAM",method:"GET",path:"/rest/products/search",decision:"block",status:403,phase:"2",score:0,threshold:5,mode:"ENABLED",field:"ARGS:q",fieldKey:"fieldSearch",contentKey:"contentDropControl",whyKey:"whyLabControl",rules:[["100050","WFR lab F: DROP keyword in an argument"]]},
+  {key:"labAfterControl",file:"labf-after-drop-table-blocked.json",tx:"ar4eZ4q-3QgAuTQ_Zor6SQAAAAM",method:"GET",path:"/rest/products/search",decision:"block",status:403,phase:"2",score:0,threshold:5,mode:"ENABLED",field:"ARGS:q",fieldKey:"fieldSearch",contentKey:"contentDropControl",whyKey:"whyLabControl",rules:[["100050","WFR lab F: SQL DROP statement in an argument"]]},
+  {key:"searchBlocked",file:"phase1-crs-sqli-blocked.json",tx:"ar4djKPK1WHVNKMHG_yyEQAAAEI",method:"GET",path:"/rest/products/search",decision:"block",status:403,phase:"2",score:5,threshold:5,mode:"ENABLED",field:"ARGS:q",fieldKey:"fieldSearch",contentKey:"contentSqlSearch",whyKey:"whySqli",rules:[["942100","SQL Injection Attack Detected via libinjection"],["949110","Inbound Anomaly Score Exceeded (Total Score: 5)"]]},
+  {key:"searchWatch",file:"phase1-crs-sqli-detectiononly.json",tx:"ar4d5KxKyxWZTWyTXghEgwAAAAE",method:"GET",path:"/rest/products/search",decision:"allow",status:200,phase:"2",score:5,threshold:5,mode:"DETECTION_ONLY",field:"ARGS:q",fieldKey:"fieldSearch",contentKey:"contentSqlSearch",whyKey:"whyDetection",rules:[["942100","SQL Injection Attack Detected via libinjection"],["949110","Inbound Anomaly Score Exceeded (Total Score: 5)"]]},
+  {key:"numericHost",file:"phase1-numeric-host-allowed.json",tx:"ar4djKPK1WHVNKMHG_yyEgAAAEQ",method:"GET",path:"/",decision:"logged",status:200,phase:"1",score:3,threshold:5,mode:"ENABLED",field:"REQUEST_HEADERS:Host",fieldKey:"fieldHost",contentKey:"contentNumeric",whyKey:"whyHost",rules:[["920350","Host header is a numeric IP address"]]},
+  {key:"loginFive",file:"phase5-threshold5-login-sqli-blocked.json",tx:"ar4e9BdBzY3fHQgqtF7INwAAAEw",method:"POST",path:"/rest/user/login",decision:"block",status:403,phase:"2",score:5,threshold:5,mode:"ENABLED",field:"ARGS:email",fieldKey:"fieldEmail",contentKey:"contentEmail",whyKey:"whyLoginFive",rules:[["942100","SQL Injection Attack Detected via libinjection"],["949110","Inbound Anomaly Score Exceeded (Total Score: 5)"]]},
+  {key:"loginTen",file:"phase5-threshold10-login-sqli-allowed.json",tx:"ar4fwldKj6OGqet0DMXGgQAAABE",method:"POST",path:"/rest/user/login",decision:"allow",status:201,phase:"2",score:5,threshold:10,mode:"ENABLED",field:"ARGS:email",fieldKey:"fieldEmail",contentKey:"contentEmail",whyKey:"whyLoginTen",rules:[["942100","SQL Injection Attack Detected via libinjection"]]}
+];
+
+const wfrQuestions=["q1","q2","q3","q4","q5"];
+const wfrGroups={FP001:["fpBefore","fpAfter"],FP002:["basketBeforePut","basketAfterPut"],LABF:["labBeforeCough","labAfterCough"]};
+let wfrLang="en";
+let wfrSelected="fpBefore";
+let wfrPlatform="powershell";
+let wfrSceneVisible=false;
+let wfrTapeTimer=0;
+let wfrTapeIndex=0;
+let wfrHeroIndex=0;
+const wfrReduced=window.matchMedia("(prefers-reduced-motion: reduce)");
+const wfrTapeIds=["fpBefore","labAfterCough","basketBeforePut","numericHost","loginFive"];
+
+function wfrText(key){return copy[wfrLang][key] || key;}
+function wfrEl(tag,className,text){
+  const el=document.createElement(tag);
+  if(className) el.className=className;
+  if(text!==undefined) el.textContent=text;
+  return el;
+}
+function wfrAssertDictionaries(){
+  const a=Object.keys(en).sort().join("|");
+  const b=Object.keys(es).sort().join("|");
+  if(a!==b) throw new Error("English and Spanish showcase dictionaries differ");
+}
+function wfrSetLang(lang,persist){
+  if(!copy[lang]) return;
+  wfrLang=lang;
+  document.documentElement.lang=lang;
+  document.title=copy[lang].title;
+  document.querySelector('meta[name="description"]').content=copy[lang].description;
+  document.querySelector('meta[property="og:description"]').content=copy[lang].ogDescription;
+  document.querySelector('meta[name="twitter:description"]').content=copy[lang].ogDescription;
+  document.querySelectorAll("[data-i]").forEach(function(el){el.textContent=copy[lang][el.dataset.i] || "";});
+  document.querySelectorAll("[data-ia]").forEach(function(el){el.setAttribute("aria-label",copy[lang][el.dataset.ia] || "");});
+  document.querySelectorAll("[data-ip]").forEach(function(el){el.placeholder=copy[lang][el.dataset.ip] || "";});
+  document.querySelectorAll("[data-lang]").forEach(function(el){el.setAttribute("aria-pressed",String(el.dataset.lang===lang));});
+  document.querySelectorAll("[data-alt-key]").forEach(function(el){
+    const value=copy[lang][el.dataset.altKey] || "";
+    if(el.tagName==="IMG") el.alt=value;
+    if(el.tagName==="BUTTON") el.setAttribute("aria-label",value);
+  });
+  document.querySelectorAll("[data-tip-key]").forEach(function(el){
+    const value=copy[lang][el.dataset.tipKey] || "";
+    el.dataset.tip=value;
+    el.title=value;
+    el.setAttribute("aria-label",el.textContent+": "+value);
+  });
+  wfrUpdateThemeControls();
+  wfrRenderQuestions();
+  wfrRenderAnatomy();
+  wfrRenderPhases();
+  wfrRenderConsole();
+  wfrRenderRuleGrid();
+  wfrRenderLessons();
+  wfrRenderTimeline();
+  wfrRenderCommands();
+  wfrRenderSafety();
+  wfrRenderRoadmap();
+  wfrRenderGlossary();
+  wfrUpdateSimulator();
+  wfrUpdateRuleMeaning("directive");
+  wfrUpdateMarker();
+  if(persist){
+    try{localStorage.setItem("wfr-language",lang);}catch(e){}
+  }
+}
+function wfrRenderQuestions(){
+  const root=document.getElementById("question-grid");
+  root.replaceChildren();
+  wfrQuestions.forEach(function(key,index){
+    const card=wfrEl("article","question");
+    card.dataset.question=String(index+1);
+    card.append(wfrEl("span","q-no","0"+(index+1)));
+    card.append(wfrEl("h3","",wfrText(key)));
+    root.append(card);
+  });
+  wfrMarkAnswered();
+}
+function wfrMarkAnswered(){
+  document.querySelectorAll(".question").forEach(function(card){
+    card.classList.add("is-answered");
+    card.setAttribute("aria-current",card.dataset.question==="1"?"step":"false");
+  });
+}
+function wfrRenderAnatomy(part){
+  const current=part || document.querySelector(".anatomy-part[aria-pressed='true']")?.dataset.part || "method";
+  const pair=copy[wfrLang].anatomy[current];
+  document.getElementById("anatomy-restaurant").textContent=pair[0];
+  document.getElementById("anatomy-website").textContent=pair[1];
+  document.querySelectorAll(".anatomy-part").forEach(function(btn){btn.setAttribute("aria-pressed",String(btn.dataset.part===current));});
+  const root=document.getElementById("status-chips");
+  root.replaceChildren();
+  copy[wfrLang].statuses.forEach(function(item){
+    const chip=wfrEl("div","status-chip");
+    chip.append(wfrEl("b","",item[0]),wfrEl("span","",item[1]),wfrEl("span","",item[2]));
+    root.append(chip);
+  });
+}
+function wfrShotButton(shot){
+  const btn=wfrEl("button","shot");
+  btn.type="button";
+  btn.dataset.shot=shot.src;
+  btn.dataset.caption=shot.caption;
+  btn.dataset.alt=shot.alt;
+  btn.setAttribute("aria-label",shot.alt);
+  const img=wfrEl("img");
+  img.src=shot.src;
+  img.alt=shot.alt;
+  img.width=shot.w;
+  img.height=shot.h;
+  img.loading="lazy";
+  const cap=wfrEl("span","",shot.caption);
+  btn.append(img,cap);
+  return btn;
+}
+function wfrRenderPhases(){
+  const root=document.getElementById("phase-list");
+  root.replaceChildren();
+  copy[wfrLang].phases.forEach(function(phase,index){
+    const article=wfrEl("article","phase");
+    const number=wfrEl("div","phase-number");
+    number.append(wfrEl("b","",String(index)));
+    const body=wfrEl("div","card phase-content");
+    body.append(wfrEl("h3","",phase.title),wfrEl("p","",phase.plain));
+    const facts=wfrEl("ul","phase-facts");
+    phase.facts.forEach(function(fact){facts.append(wfrEl("li","",fact));});
+    body.append(facts);
+    if(phase.scenario){
+      const drill=wfrEl("div","yaml-card");
+      const title=wfrEl("b","",wfrText("scenarioTitle"));
+      const p=wfrEl("p","",wfrText("scenarioText"));
+      const pre=wfrEl("pre");
+      pre.textContent='id: HDR-001\nname: lab bot marker in User-Agent is blocked\nkind: control\nrequest: {method: GET, path: /, headers: {User-Agent: "WFR-Lab-Bot/1.0"}}\nexpected: {decision: blocked, status: 403, intercepted_by: 100001}';
+      drill.append(title,p,pre);
+      body.append(drill);
+    }
+    if(phase.attacks){
+      const table=wfrEl("table","attack-table");
+      const thead=wfrEl("thead");
+      const tr=wfrEl("tr");
+      ["attackName","everydayVersion","resultBlocked"].forEach(function(key){tr.append(wfrEl("th","",wfrText(key)));});
+      thead.append(tr);
+      const tbody=wfrEl("tbody");
+      phase.attacks.forEach(function(row){
+        const line=wfrEl("tr");
+        line.append(wfrEl("td","",row[0]),wfrEl("td","",row[1]),wfrEl("td","",wfrText("blockedByCrs")));
+        tbody.append(line);
+      });
+      table.append(thead,tbody);
+      body.append(table);
+      const cards=wfrEl("div","autopsy-grid");
+      const autopsies=[
+        ["942100","autopsy942","docs/crs-rule-autopsies/942100.md"],
+        ["941110","autopsy941","docs/crs-rule-autopsies/941110.md"],
+        ["930120","autopsy930","docs/crs-rule-autopsies/930120.md"],
+        ["932235","autopsy932","docs/crs-rule-autopsies/932235.md"],
+        ["920350","autopsy920","docs/crs-rule-autopsies/920350.md"]
+      ];
+      autopsies.forEach(function(item){
+        const link=wfrEl("a","autopsy");
+        link.href="https://github.com/albeen-sknight/waf-flight-recorder/blob/main/"+item[2];
+        link.append(wfrEl("b","",item[0]),wfrEl("span","",wfrText(item[1])));
+        cards.append(link);
+      });
+      body.append(cards);
+    }
+    if(index===6){
+      const lazy=wfrEl("div","controls-list");
+      lazy.append(wfrEl("h4","",wfrText("lazyHeading")));
+      copy[wfrLang].lazyFixes.forEach(function(text){
+        const item=wfrEl("div","control-note");
+        item.textContent=text;
+        item.classList.add("crossed");
+        lazy.append(item);
+      });
+      body.append(lazy);
+      const controlWrap=wfrEl("div");
+      controlWrap.append(wfrEl("h4","",wfrText("controlsHeading")));
+      const controls=wfrEl("div","controls-list");
+      copy[wfrLang].fourControls.forEach(function(text){controls.append(wfrEl("div","control-note",text));});
+      controlWrap.append(controls);
+      body.append(controlWrap);
+    }
+    const shots=wfrEl("div","shots");
+    phase.shots.forEach(function(shot){shots.append(wfrShotButton(shot));});
+    body.append(shots);
+    article.append(number,body);
+    root.append(article);
+  });
+}
+function wfrStatusClass(record){
+  if(record.decision==="block") return "blocked";
+  if(record.decision==="logged") return "logged";
+  return "allowed";
+}
+function wfrDecisionLabel(record){
+  if(record.decision==="block") return wfrText("blocked");
+  if(record.decision==="logged") return wfrText("loggedAllowed");
+  return wfrText("allowed");
+}
+function wfrSummary(record){
+  const result=record.decision==="block"?"BLOCK":"allow";
+  const ids=record.rules.map(function(rule){return rule[0];}).filter(function(id){return id!=="980170";}).join(",") || "-";
+  return record.tx+"  "+result+" p"+record.phase+"  score="+record.score+"  "+record.status+"  "+record.method+" "+record.path+"  rules="+ids;
+}
+function wfrRenderConsole(){
+  const list=document.getElementById("record-list");
+  list.replaceChildren();
+  records.forEach(function(record){
+    const btn=wfrEl("button","record-row");
+    btn.type="button";
+    btn.setAttribute("role","option");
+    btn.setAttribute("aria-pressed",String(record.key===wfrSelected));
+    btn.dataset.record=record.key;
+    const name=wfrEl("span","record-name",wfrText("record")[record.key]);
+    const chip=wfrEl("span","status "+wfrStatusClass(record),wfrDecisionLabel(record));
+    const line=wfrEl("span","record-line",record.method+" "+record.path);
+    const meta=wfrEl("span","record-meta","HTTP "+record.status+" · p"+record.phase+" · score "+record.score);
+    btn.append(name,chip,line,meta);
+    list.append(btn);
+  });
+  wfrRenderInspector();
+}
+function wfrRenderInspector(){
+  const record=records.find(function(item){return item.key===wfrSelected;}) || records[0];
+  document.getElementById("inspect-title").textContent=wfrText("record")[record.key];
+  document.getElementById("inspect-subtitle").textContent=record.method+" "+record.path+" · "+record.file;
+  const status=document.getElementById("inspect-status");
+  status.className="status "+wfrStatusClass(record);
+  status.textContent=record.status+" · "+wfrDecisionLabel(record);
+  const root=document.getElementById("answers");
+  root.replaceChildren();
+  const answer1=wfrEl("section","answer");
+  answer1.append(wfrEl("h4","",wfrText("inspectorQuestion1")));
+  answer1.append(wfrEl("p","",wfrText(record.fieldKey)+": "+wfrText(record.contentKey)));
+  if(record.valueKey) answer1.append(wfrEl("code","",wfrText(record.valueKey)));
+  root.append(answer1);
+  const answer2=wfrEl("section","answer");
+  answer2.append(wfrEl("h4","",wfrText("inspectorQuestion2")));
+  if(record.rules.length){
+    const ul=wfrEl("ul","rule-matches");
+    record.rules.forEach(function(rule){
+      if(rule[0]==="980170") return;
+      const li=wfrEl("li");
+      li.append(wfrEl("code","",rule[0]),wfrEl("span","",rule[1]));
+      ul.append(li);
+    });
+    answer2.append(ul);
+  }else{
+    answer2.append(wfrEl("p","",wfrText("noMatch")));
+  }
+  root.append(answer2);
+  const answer3=wfrEl("section","answer");
+  answer3.append(wfrEl("h4","",wfrText("inspectorQuestion3")),wfrEl("p","",wfrText(record.whyKey)));
+  root.append(answer3);
+  const answer4=wfrEl("section","answer");
+  answer4.append(wfrEl("h4","",wfrText("inspectorQuestion4")));
+  const trace=wfrEl("div","trace");
+  trace.append(wfrEl("div","trace-line",wfrText("decisionText")+": "+wfrDecisionLabel(record)+" · "+record.status));
+  trace.append(wfrEl("div","trace-line",wfrText("traceText")+": "+record.tx));
+  trace.append(wfrEl("div","trace-line",wfrText("headerText")+": X-WFR-Transaction "+record.tx));
+  trace.append(wfrEl("div","trace-line",wfrText("engineMode")+": "+record.mode));
+  trace.append(wfrEl("div","trace-line",wfrText("scoreLabel")+": "+record.score+" · "+wfrText("thresholdLabel")+": "+record.threshold));
+  trace.append(wfrEl("code","",wfrSummary(record)));
+  answer4.append(trace);
+  root.append(answer4);
+  const answer5=wfrEl("section","answer");
+  answer5.append(wfrEl("h4","",wfrText("inspectorQuestion5")),wfrEl("p","",wfrText(record.whyKey)));
+  if(record.group){
+    const compare=wfrEl("div","compare");
+    compare.append(wfrEl("span","micro-label",wfrText("compareLabel")));
+    const variants=wfrGroups[record.group];
+    variants.forEach(function(key,index){
+      const btn=wfrEl("button","",index===0?wfrText("before"):wfrText("after"));
+      btn.type="button";
+      btn.dataset.variant=key;
+      btn.setAttribute("aria-pressed",String(record.key===key));
+      compare.append(btn);
+    });
+    answer5.append(compare);
+  }else{
+    answer5.append(wfrEl("p","no-fix",wfrText("notTuned")));
+  }
+  const link=wfrEl("a","sample-source",wfrText("sourceSample"));
+  link.href="https://github.com/albeen-sknight/waf-flight-recorder/blob/main/evidence/sanitized-samples/"+record.file;
+  link.target="_blank";
+  link.rel="noopener";
+  answer5.append(link);
+  root.append(answer5);
+  document.querySelectorAll(".record-row").forEach(function(btn){btn.setAttribute("aria-pressed",String(btn.dataset.record===record.key));});
+  wfrMarkAnswered();
+}
+function wfrRenderRuleGrid(){
+  const root=document.getElementById("rule-grid");
+  root.replaceChildren();
+  copy[wfrLang].rules.forEach(function(rule){
+    const card=wfrEl("article","card rule-card");
+    card.append(wfrEl("span","rule-id",rule.id),wfrEl("p","",rule.what),wfrEl("p","lesson",rule.lesson));
+    if(rule.solo){
+      const tag=wfrEl("span","tag",wfrText("soloLaps"));
+      card.append(tag);
+      const link=wfrEl("a","sample-source",wfrText("tutorialLink"));
+      link.href="https://github.com/albeen-sknight/waf-flight-recorder/blob/main/docs/tutorial-first-rule.md";
+      card.append(link);
+    }
+    root.append(card);
+  });
+}
+function wfrRenderLessons(){
+  const root=document.getElementById("lesson-grid");
+  root.replaceChildren();
+  copy[wfrLang].lessons.forEach(function(item,index){
+    const card=wfrEl("article","card lesson-card");
+    card.append(wfrEl("b","",String(index+1).padStart(2,"0")+" · "+item[0]),wfrEl("p","",item[1]));
+    root.append(card);
+  });
+}
+function wfrRenderTimeline(){
+  const root=document.getElementById("timeline");
+  root.replaceChildren();
+  copy[wfrLang].timeline.forEach(function(item){
+    const point=wfrEl("article","timepoint");
+    const time=wfrEl("time","",item[0]);
+    point.append(time,wfrEl("p","",item[1]));
+    root.append(point);
+  });
+}
+function wfrCommandText(commands){
+  return commands.map(function(row){return row[0]+"\n"+row[1];}).join("\n\n");
+}
+function wfrTerminal(title,commands){
+  const card=wfrEl("article","card terminal-card");
+  const head=wfrEl("div","terminal-heading");
+  head.append(wfrEl("h3","",title));
+  const button=wfrEl("button","copy",wfrText("copyButton"));
+  button.type="button";
+  button.dataset.copy=wfrCommandText(commands);
+  head.append(button);
+  const terminal=wfrEl("div","terminal");
+  const pre=wfrEl("pre");
+  pre.textContent=wfrCommandText(commands);
+  terminal.append(pre);
+  const state=wfrEl("p","copy-state","");
+  state.setAttribute("aria-live","polite");
+  card.append(head,terminal,state);
+  return card;
+}
+function wfrRenderCommands(){
+  const root=document.getElementById("commands");
+  root.replaceChildren();
+  root.append(wfrTerminal(wfrText("setupBlock"),copy[wfrLang].setupCommands));
+  const poke=wfrEl("article","card terminal-card");
+  const head=wfrEl("div","terminal-heading");
+  head.append(wfrEl("h3","",wfrText("pokeBlock")));
+  const button=wfrEl("button","copy",wfrText("copyButton"));
+  button.type="button";
+  const commands=wfrPlatform==="powershell"?copy[wfrLang].pokePowershell:copy[wfrLang].pokeBash;
+  button.dataset.copy=wfrCommandText(commands);
+  head.append(button);
+  const terminal=wfrEl("div","terminal");
+  const pre=wfrEl("pre");
+  pre.textContent=wfrCommandText(commands);
+  terminal.append(pre);
+  const state=wfrEl("p","copy-state","");
+  state.setAttribute("aria-live","polite");
+  poke.append(head,terminal,state);
+  root.append(poke);
+  document.querySelectorAll("[data-platform]").forEach(function(tab){tab.setAttribute("aria-pressed",String(tab.dataset.platform===wfrPlatform));});
+}
+function wfrRenderSafety(){
+  const root=document.getElementById("safety-list");
+  root.replaceChildren();
+  copy[wfrLang].safety.forEach(function(line){root.append(wfrEl("li","",line));});
+}
+function wfrRenderRoadmap(){
+  const root=document.getElementById("roadmap");
+  root.replaceChildren();
+  copy[wfrLang].roadmap.forEach(function(item){
+    const li=wfrEl("li");
+    li.append(wfrEl("b","",item[0]),wfrEl("span","road-status "+item[2],item[1]));
+    root.append(li);
+  });
+}
+function wfrRenderGlossary(){
+  const root=document.getElementById("glossary-list");
+  const query=document.getElementById("glossary-search").value.trim().toLocaleLowerCase(wfrLang);
+  root.replaceChildren();
+  copy[wfrLang].glossary.forEach(function(item){
+    const row=wfrEl("div","glossary-item");
+    const term=wfrEl("dt","",item[0]);
+    const def=wfrEl("dd","",item[1]);
+    row.append(term,def);
+    row.hidden=!(item[0]+" "+item[1]).toLocaleLowerCase(wfrLang).includes(query);
+    root.append(row);
+  });
+}
+function wfrUpdateRuleMeaning(part){
+  document.getElementById("rule-meaning").textContent=copy[wfrLang].ruleParts[part];
+  document.querySelectorAll("[data-rulepart]").forEach(function(btn){btn.setAttribute("aria-pressed",String(btn.dataset.rulepart===part));});
+}
+function wfrUpdateMarker(){
+  const fixed=document.getElementById("lowercase-toggle").getAttribute("aria-pressed")==="true";
+  document.getElementById("marker-value").textContent=fixed?"albeen-scanner/1.0":"Albeen-Scanner/1.0";
+  document.getElementById("marker-outcome").textContent=fixed?copy[wfrLang].markerBlocked:copy[wfrLang].markerAllowed;
+  document.getElementById("lowercase-toggle").setAttribute("aria-pressed",String(fixed));
+  const action=document.getElementById("rule-actions");
+  const ruleOptions="id:100080,phase:1,deny,status:403,log,t:none"+(fixed?",t:lowercase":"")+",msg:'My rule'";
+  action.textContent="\""+ruleOptions+"\"";
+}
+function wfrUpdateThemeControls(){
+  const light=document.documentElement.dataset.theme==="light";
+  document.getElementById("theme-label").textContent=copy[wfrLang][light?"themeLight":"themeDark"];
+  document.getElementById("theme-toggle").setAttribute("aria-label",copy[wfrLang][light?"themeButtonDark":"themeButtonLight"]);
+}
+function wfrUpdateSimulator(){
+  const score=Array.from(document.querySelectorAll(".score-check:checked")).reduce(function(sum,input){return sum+Number(input.value);},0);
+  const threshold=Number(document.getElementById("threshold").value);
+  const blocked=score>=threshold;
+  const logged=score>0&&!blocked;
+  const pct=Math.min(100,Math.round(score/threshold*100));
+  document.getElementById("threshold-value").textContent=String(threshold);
+  document.getElementById("threshold").setAttribute("aria-valuenow",String(threshold));
+  document.getElementById("sim-score").textContent=score+" / "+threshold;
+  const fill=document.getElementById("score-fill");
+  fill.style.width=pct+"%";
+  fill.classList.toggle("is-blocked",blocked);
+  const chip=document.getElementById("sim-chip");
+  chip.className="status "+(blocked?"blocked":logged?"logged":"allowed");
+  chip.textContent=copy[wfrLang][blocked?"simBlocked":logged?"simLogged":"simAllowed"];
+  document.getElementById("sim-result").textContent=copy[wfrLang][blocked?"atThreshold":logged?"underThreshold":"underThreshold"];
+  document.getElementById("threshold-reveal").hidden=threshold!==10;
+  document.getElementById("score-visual").setAttribute("aria-label",score+" "+copy[wfrLang].totalScore+" "+threshold);
+}
+function wfrAppendTape(record,live){
+  const tape=document.getElementById("flight-tape");
+  const line=wfrEl("div","tape-line",wfrSummary(record));
+  if(record.decision==="block") line.classList.add("block-word");
+  if(record.decision==="allow"||record.decision==="logged") line.classList.add("allow-word");
+  tape.append(line);
+  while(tape.children.length>6) tape.firstElementChild.remove();
+  tape.scrollTop=tape.scrollHeight;
+  if(live) tape.setAttribute("aria-live","polite");
+}
+function wfrAdvanceTape(){
+  const record=records.find(function(item){return item.key===wfrTapeIds[wfrTapeIndex%wfrTapeIds.length];});
+  if(record) wfrAppendTape(record,false);
+  wfrTapeIndex+=1;
+}
+function wfrUpdateMotion(){
+  const scene=document.getElementById("request-scene");
+  const shouldPause=!wfrSceneVisible||document.hidden||wfrReduced.matches;
+  if(shouldPause){
+    scene.pauseAnimations();
+    document.getElementById("scene-panel").classList.add("scene-paused");
+    if(wfrTapeTimer){clearInterval(wfrTapeTimer);wfrTapeTimer=0;}
+    return;
+  }
+  scene.unpauseAnimations();
+  document.getElementById("scene-panel").classList.remove("scene-paused");
+  if(!wfrTapeTimer) wfrTapeTimer=window.setInterval(wfrAdvanceTape,4200);
+}
+function wfrReplay(){
+  const sequence=["labAfterCough","basketBeforePut","fpBefore","numericHost"];
+  const record=records.find(function(item){return item.key===sequence[wfrHeroIndex%sequence.length];});
+  wfrHeroIndex+=1;
+  if(record){
+    wfrAppendTape(record,true);
+    const note=document.getElementById("replay-note");
+    note.textContent=wfrText("replaySafe");
+  }
+  if(!wfrReduced.matches){
+    const scene=document.getElementById("request-scene");
+    scene.setCurrentTime(0);
+    wfrUpdateMotion();
+  }
+}
+async function wfrCopy(button){
+  const card=button.closest(".terminal-card");
+  const state=card.querySelector(".copy-state");
+  try{
+    await navigator.clipboard.writeText(button.dataset.copy);
+    state.textContent=wfrText("copied");
+  }catch(e){
+    state.textContent=wfrText("copyFailed");
+  }
+}
+function wfrOpenShot(button){
+  const dialog=document.getElementById("lightbox");
+  const image=document.getElementById("lightbox-image");
+  const thumbnail=button.querySelector("img");
+  image.src=button.dataset.shot;
+  if(thumbnail){image.width=thumbnail.naturalWidth||Number(thumbnail.getAttribute("width"));image.height=thumbnail.naturalHeight||Number(thumbnail.getAttribute("height"));}
+  image.loading="lazy";
+  const caption=button.dataset.captionKey?copy[wfrLang][button.dataset.captionKey]:button.dataset.caption;
+  const alt=button.dataset.altKey?copy[wfrLang][button.dataset.altKey]:button.dataset.alt;
+  image.alt=alt;
+  document.getElementById("lightbox-caption").textContent=caption;
+  document.getElementById("lightbox-alt").textContent=alt;
+  dialog.showModal();
+}
+function wfrInit(){
+  wfrAssertDictionaries();
+  let language=navigator.language&&navigator.language.toLowerCase().startsWith("es")?"es":"en";
+  try{
+    const saved=localStorage.getItem("wfr-language");
+    if(saved==="en"||saved==="es") language=saved;
+  }catch(e){}
+  const prefersLight=window.matchMedia("(prefers-color-scheme: light)").matches;
+  document.documentElement.dataset.theme=prefersLight?"light":"dark";
+  document.getElementById("theme-toggle").setAttribute("aria-pressed",String(prefersLight));
+  document.getElementById("theme-label").textContent=copy[language][prefersLight?"themeLight":"themeDark"];
+  wfrSetLang(language,false);
+  records.forEach(function(record){wfrAppendTape(record,false);});
+  const observer=new IntersectionObserver(function(entries){
+    wfrSceneVisible=entries.some(function(entry){return entry.isIntersecting;});
+    wfrUpdateMotion();
+  },{threshold:.08});
+  observer.observe(document.getElementById("scene-panel"));
+  document.addEventListener("visibilitychange",wfrUpdateMotion);
+  if(wfrReduced.addEventListener) wfrReduced.addEventListener("change",wfrUpdateMotion);
+  console.log("⚡ [WAF Flight Recorder] Showcase initialized");
+}
+document.addEventListener("click",function(event){
+  const lang=event.target.closest("[data-lang]");
+  if(lang){wfrSetLang(lang.dataset.lang,true);return;}
+  const part=event.target.closest("[data-part]");
+  if(part){wfrRenderAnatomy(part.dataset.part);return;}
+  const record=event.target.closest("[data-record]");
+  if(record){wfrSelected=record.dataset.record;wfrRenderConsole();return;}
+  const variant=event.target.closest("[data-variant]");
+  if(variant){wfrSelected=variant.dataset.variant;wfrRenderConsole();return;}
+  const rule=event.target.closest("[data-rulepart]");
+  if(rule){wfrUpdateRuleMeaning(rule.dataset.rulepart);return;}
+  const shot=event.target.closest("[data-shot]");
+  if(shot){wfrOpenShot(shot);return;}
+  const copyButton=event.target.closest("[data-copy]");
+  if(copyButton){wfrCopy(copyButton);return;}
+  const platform=event.target.closest("[data-platform]");
+  if(platform){wfrPlatform=platform.dataset.platform;wfrRenderCommands();return;}
+});
+document.getElementById("send-request").addEventListener("click",wfrReplay);
+document.getElementById("theme-toggle").addEventListener("click",function(){
+  const light=document.documentElement.dataset.theme!=="light";
+  document.documentElement.dataset.theme=light?"light":"dark";
+  this.setAttribute("aria-pressed",String(light));
+  wfrUpdateThemeControls();
+});
+document.getElementById("lowercase-toggle").addEventListener("click",function(){
+  this.setAttribute("aria-pressed",String(this.getAttribute("aria-pressed")!=="true"));
+  wfrUpdateMarker();
+});
+document.getElementById("threshold").addEventListener("input",wfrUpdateSimulator);
+document.querySelectorAll(".score-check").forEach(function(input){input.addEventListener("change",wfrUpdateSimulator);});
+document.getElementById("glossary-search").addEventListener("input",wfrRenderGlossary);
+document.getElementById("lightbox-close").addEventListener("click",function(){document.getElementById("lightbox").close();});
+document.getElementById("lightbox").addEventListener("click",function(event){if(event.target===this)this.close();});
+wfrInit();
+</script>
+</body>
+</html>

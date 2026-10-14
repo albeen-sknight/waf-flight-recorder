@@ -2,6 +2,8 @@
 
 [![WAF lab](https://github.com/albeen-sknight/waf-flight-recorder/actions/workflows/lab.yml/badge.svg)](https://github.com/albeen-sknight/waf-flight-recorder/actions/workflows/lab.yml)
 
+**Live showcase:** https://albeen-sknight.github.io/waf-flight-recorder/
+
 I put a real web application firewall in front of a shop that's broken on purpose. Then I attacked it, wrote my own rules, broke them, found a mistake in the official ruleset and fixed it without opening a hole. Every claim below has a log entry behind it and a test that fails the moment it stops being true.
 
 This README is two things at once. It's the story of a project I built. And it's a handbook: if you've never touched a WAF, you can read it top to bottom and learn what I learned, in the order I learned it. Every new idea gets an everyday example first and the technical name second. Every command has a comment saying what it actually does.
