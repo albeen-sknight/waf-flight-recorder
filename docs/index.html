@@ -860,7 +860,6 @@ footer h2{margin:14px 0 0;font-size:1.05rem}
       <a href="https://github.com/owasp-modsecurity/ModSecurity/wiki" data-i="modsecurityReference"></a>
       <a href="https://coreruleset.org/docs/">OWASP CRS docs</a>
     </nav>
-    <p><a href="https://albeen-sknight.github.io/waf-flight-recorder/" data-i="liveShowcase"></a></p>
   </div>
 </footer>
 
@@ -956,7 +955,7 @@ const en = {
     loginFive:"Login check, threshold 5",loginTen:"Login check, threshold 10"
   },
   allowed:"ALLOWED",blocked:"BLOCKED",loggedAllowed:"LOGGED, ALLOWED",compareLabel:"Compare the tuning change",
-  before:"Before",after:"After",sourceSample:"Open this sanitized sample on GitHub",notTuned:"This entry is evidence for a decision. Its related rule notes are linked in the repository.",
+  before:"Before",after:"After",sourceSample:"Open this sanitized sample on GitHub",
   noMatch:"No rule matched. The request reached the application.",
   fieldComment:"The comment field in the JSON body",fieldMethod:"The HTTP method",fieldSearch:"The search field in the query parameters",
   fieldHost:"The Host header",fieldEmail:"The email field in the JSON body",
@@ -971,6 +970,16 @@ const en = {
   contentSqlSearch:"The search field contains a database login shortcut. Its text stays out of this page.",
   contentNumeric:"The request used a numeric address in the Host header.",
   contentEmail:"The login email field tries to bypass the normal login check. Its text stays out of this page.",
+  fixFp:"Runtime exclusion 1010 removes rule 932235 from the comment field, and only on POST /api/Feedbacks. I didn't delete the rule, ignore the field everywhere or raise the threshold: each of those opens a hole.",
+  fixFpControl:"Nothing to fix here. This is the first of four controls for exclusion 1010, and it proves the narrow fix didn't let a real command injection back in.",
+  fixBasket:"A CRS setting, not an exception: rule 900200 now lists GET HEAD POST OPTIONS PUT PATCH DELETE as allowed methods. My rules 100010 and 100060 still refuse WebDAV methods and DELETE on feedback.",
+  fixLab:"Version 2 of my rule 100050 only matches a whole DROP statement followed by an object type, after t:lowercase and t:compressWhitespace. Cough drops pass again.",
+  fixLabControl:"Nothing to fix here. This is the attack control: it has to stay blocked before and after the narrower rule, and it does.",
+  fixSqli:"Nothing to fix: this is the guard doing its job. Compare it with the same request in DetectionOnly mode, where it's logged but let through.",
+  fixDetection:"Nothing to fix: DetectionOnly is a trial mode, like CCTV with nobody watching live. With the engine On, the same request gets a 403.",
+  fixHost:"Nothing to fix: one small oddity stays under the limit. Add an empty User Agent for 2 more points and the same visit reaches 5 and is blocked.",
+  fixLoginFive:"Nothing to fix at the default threshold of 5. The experiment raised it to 10 to see what would slip through.",
+  fixLoginTen:"Put the threshold back to 5. Threshold changes are experiments, not fixes: at 10, every attack that trips exactly one serious rule gets through.",
   whyFp:"Rule 932235 looks for a command shaped pattern. The newsletter link happens to include pieces the rule recognizes, even though the customer is sharing a URL.",
   whyFpAfter:"The runtime exclusion applies to one rule, one comment field, and one feedback route. The other CRS checks remain active.",
   whyControl:"The exclusion removes only rule 932235 from the comment field on this route. Other CRS rules still catch a command that tries to read a system file.",
@@ -1124,7 +1133,6 @@ const en = {
   profileLink:"My GitHub profile",moreProjects:"More projects",repoLink:"WAF Flight Recorder on GitHub",
   footerNote:"Synthetic data only. Every log sample is cleaned before it's published.",
   referencesTitle:"References",modsecurityReference:"ModSecurity Reference Manual",
-  liveShowcase:"Live showcase: https://albeen-sknight.github.io/waf-flight-recorder/",
   closeImage:"Close image",
   shot14:"With the limit at 10, these attacks walk straight through.",shot14Alt:"The threshold 10 experiment results.",
   phaseCaption:"Evidence from the README",
@@ -1216,7 +1224,7 @@ const es = {
     loginFive:"Comprobación de acceso, límite 5",loginTen:"Comprobación de acceso, límite 10"
   },
   allowed:"PERMITIDA",blocked:"BLOQUEADA",loggedAllowed:"REGISTRADA, PERMITIDA",compareLabel:"Comparar el cambio de ajuste",
-  before:"Antes",after:"Después",sourceSample:"Abrir esta muestra depurada en GitHub",notTuned:"Esta entrada prueba una decisión. En el repositorio están las notas de la regla correspondiente.",
+  before:"Antes",after:"Después",sourceSample:"Abrir esta muestra depurada en GitHub",
   noMatch:"No coincidió ninguna regla. La petición llegó a la aplicación.",
   fieldComment:"El campo de comentario del JSON",fieldMethod:"El método HTTP",fieldSearch:"El campo de búsqueda en los parámetros",
   fieldHost:"La cabecera Host",fieldEmail:"El campo de correo del JSON",
@@ -1231,6 +1239,16 @@ const es = {
   contentSqlSearch:"El campo de búsqueda contiene un atajo para acceder a la base de datos. El texto exacto no aparece en esta página.",
   contentNumeric:"La petición usó una dirección numérica en la cabecera Host.",
   contentEmail:"El campo de correo intenta saltarse el control normal de acceso. El texto exacto no aparece en esta página.",
+  fixFp:"La exclusión en tiempo de ejecución 1010 quita la regla 932235 del campo de comentario, y solo en POST /api/Feedbacks. No borré la regla, ni ignoré el campo en todas partes, ni subí el límite: cada una de esas opciones abre un agujero.",
+  fixFpControl:"Aquí no hay nada que arreglar. Es el primero de los cuatro controles de la exclusión 1010, y demuestra que el ajuste preciso no dejó pasar una inyección de comandos real.",
+  fixBasket:"Un ajuste de CRS, no una excepción: la regla 900200 ahora permite los métodos GET HEAD POST OPTIONS PUT PATCH DELETE. Mis reglas 100010 y 100060 siguen rechazando los métodos WebDAV y DELETE en opiniones.",
+  fixLab:"La versión 2 de mi regla 100050 solo detecta una orden DROP completa seguida de un tipo de objeto, después de t:lowercase y t:compressWhitespace. La búsqueda de caramelos para la tos vuelve a pasar.",
+  fixLabControl:"Aquí no hay nada que arreglar. Es el control de ataque: tiene que seguir bloqueado antes y después de la regla más precisa, y lo está.",
+  fixSqli:"No hay nada que arreglar: el guardia está haciendo su trabajo. Compáralo con la misma petición en modo DetectionOnly, donde se registra pero pasa.",
+  fixDetection:"No hay nada que arreglar: DetectionOnly es un modo de prueba, como unas cámaras sin nadie mirando en directo. Con el motor en On, la misma petición recibe un 403.",
+  fixHost:"No hay nada que arreglar: una rareza pequeña se queda por debajo del límite. Si sumas un User Agent vacío, son 2 puntos más, la visita llega a 5 y se bloquea.",
+  fixLoginFive:"No hay nada que arreglar con el límite por defecto de 5. El experimento lo subió a 10 para ver qué se colaba.",
+  fixLoginTen:"Vuelve a poner el límite en 5. Cambiar el límite es un experimento, no un arreglo: con 10, cualquier ataque que active una sola regla seria pasa.",
   whyFp:"La regla 932235 busca una forma parecida a un comando. El enlace del boletín incluye por casualidad partes que reconoce, aunque el cliente solo comparte una dirección.",
   whyFpAfter:"La exclusión en tiempo de ejecución afecta a una regla, un campo de comentario y una ruta. Las demás comprobaciones CRS siguen activas.",
   whyControl:"La exclusión solo quita la regla 932235 del campo de comentario en esta ruta. Otras reglas CRS siguen detectando un comando que intenta leer un archivo del sistema.",
@@ -1384,7 +1402,6 @@ const es = {
   profileLink:"Mi perfil de GitHub",moreProjects:"Más proyectos",repoLink:"WAF Flight Recorder en GitHub",
   footerNote:"Solo datos sintéticos. Cada muestra de log se depura antes de publicarse.",
   referencesTitle:"Referencias",modsecurityReference:"Manual de referencia de ModSecurity",
-  liveShowcase:"Web de muestra: https://albeen-sknight.github.io/waf-flight-recorder/",
   closeImage:"Cerrar imagen",
   shot14:"Con el límite en 10, varias pruebas pasan.",shot14Alt:"Resultados del experimento con el límite en 10.",
   phaseCaption:"Pruebas del README",
@@ -1393,21 +1410,21 @@ const es = {
 
 const copy = {en:en, es:es};
 const records = [
-  {key:"fpBefore",file:"fp001-before-blocked-932235.json",tx:"ar4e9BdBzY3fHQgqtF7IRQAAAEE",method:"POST",path:"/api/Feedbacks/",decision:"block",status:403,phase:"2",score:5,threshold:5,mode:"ENABLED",field:"ARGS:comment",fieldKey:"fieldComment",contentKey:"contentFp",valueKey:"safeFpValue",whyKey:"whyFp",group:"FP001",rules:[["932235","Remote Command Execution: Unix Command Injection (command without evasion)"],["949110","Inbound Anomaly Score Exceeded (Total Score: 5)"]]},
-  {key:"fpAfter",file:"fp001-after-allowed.json",tx:"ar4fEqUUtpghSxT7cH4T_gAAAEA",method:"POST",path:"/api/Feedbacks/",decision:"allow",status:201,phase:"-",score:0,threshold:5,mode:"ENABLED",field:"ARGS:comment",fieldKey:"fieldComment",contentKey:"contentFp",valueKey:"safeFpValue",whyKey:"whyFpAfter",group:"FP001",rules:[]},
-  {key:"fpControl",file:"fp001-after-ctrl1-cmdi-still-blocked.json",tx:"ar4fEuafFOqhqwGVzvHc1gAAAAQ",method:"POST",path:"/api/Feedbacks/",decision:"block",status:403,phase:"2",score:10,threshold:5,mode:"ENABLED",field:"ARGS:comment",fieldKey:"fieldComment",contentKey:"contentControl",whyKey:"whyControl",rules:[["930120","OS File Access Attempt"],["932160","Remote Command Execution: Unix Shell Code Found"],["949110","Inbound Anomaly Score Exceeded (Total Score: 10)"]]},
-  {key:"basketBeforePut",file:"fp002-before-put-blocked-911100.json",tx:"ar4evr8Z9dXC7xwMdWNDswAAAEA",method:"PUT",path:"/api/BasketItems/1",decision:"block",status:403,phase:"2",score:5,threshold:5,mode:"ENABLED",field:"REQUEST_METHOD",fieldKey:"fieldMethod",contentKey:"contentBasket",valueKey:"safeBasketValue",whyKey:"whyBasket",group:"FP002",rules:[["911100","Method is not allowed by policy"],["949110","Inbound Anomaly Score Exceeded (Total Score: 5)"]]},
-  {key:"basketBeforeDelete",file:"fp002-before-delete-blocked-911100.json",tx:"ar4evr8Z9dXC7xwMdWNDtAAAAEM",method:"DELETE",path:"/api/BasketItems/1",decision:"block",status:403,phase:"2",score:5,threshold:5,mode:"ENABLED",field:"REQUEST_METHOD",fieldKey:"fieldMethod",contentKey:"contentDelete",whyKey:"whyBasket",rules:[["911100","Method is not allowed by policy"],["949110","Inbound Anomaly Score Exceeded (Total Score: 5)"]]},
-  {key:"basketAfterPut",file:"fp002-after-put-allowed.json",tx:"ar4ewpiTzDqDadGSJUJzVwAAAAE",method:"PUT",path:"/api/BasketItems/1",decision:"allow",status:200,phase:"-",score:0,threshold:5,mode:"ENABLED",field:"REQUEST_METHOD",fieldKey:"fieldMethod",contentKey:"contentBasket",valueKey:"safeBasketValue",whyKey:"whyBasketAfter",group:"FP002",rules:[]},
-  {key:"labBeforeCough",file:"labf-before-cough-drops-blocked.json",tx:"ar4eV082DEetEvXNLgvIggAAAEA",method:"GET",path:"/rest/products/search",decision:"block",status:403,phase:"2",score:0,threshold:5,mode:"ENABLED",field:"ARGS:q",fieldKey:"fieldSearch",contentKey:"contentCough",valueKey:"safeCoughValue",whyKey:"whyLabBefore",group:"LABF",rules:[["100050","WFR lab F: DROP keyword in an argument"]]},
-  {key:"labAfterCough",file:"labf-after-cough-drops-allowed.json",tx:"ar4eZ4q-3QgAuTQ_Zor6SAAAAAE",method:"GET",path:"/rest/products/search",decision:"allow",status:200,phase:"-",score:0,threshold:5,mode:"ENABLED",field:"ARGS:q",fieldKey:"fieldSearch",contentKey:"contentCough",valueKey:"safeCoughValue",whyKey:"whyLabAfter",group:"LABF",rules:[]},
-  {key:"labBeforeControl",file:"labf-before-drop-table-blocked.json",tx:"ar4eV-XSIiJAFGquetfsfAAAAAM",method:"GET",path:"/rest/products/search",decision:"block",status:403,phase:"2",score:0,threshold:5,mode:"ENABLED",field:"ARGS:q",fieldKey:"fieldSearch",contentKey:"contentDropControl",whyKey:"whyLabControl",rules:[["100050","WFR lab F: DROP keyword in an argument"]]},
-  {key:"labAfterControl",file:"labf-after-drop-table-blocked.json",tx:"ar4eZ4q-3QgAuTQ_Zor6SQAAAAM",method:"GET",path:"/rest/products/search",decision:"block",status:403,phase:"2",score:0,threshold:5,mode:"ENABLED",field:"ARGS:q",fieldKey:"fieldSearch",contentKey:"contentDropControl",whyKey:"whyLabControl",rules:[["100050","WFR lab F: SQL DROP statement in an argument"]]},
-  {key:"searchBlocked",file:"phase1-crs-sqli-blocked.json",tx:"ar4djKPK1WHVNKMHG_yyEQAAAEI",method:"GET",path:"/rest/products/search",decision:"block",status:403,phase:"2",score:5,threshold:5,mode:"ENABLED",field:"ARGS:q",fieldKey:"fieldSearch",contentKey:"contentSqlSearch",whyKey:"whySqli",rules:[["942100","SQL Injection Attack Detected via libinjection"],["949110","Inbound Anomaly Score Exceeded (Total Score: 5)"]]},
-  {key:"searchWatch",file:"phase1-crs-sqli-detectiononly.json",tx:"ar4d5KxKyxWZTWyTXghEgwAAAAE",method:"GET",path:"/rest/products/search",decision:"allow",status:200,phase:"2",score:5,threshold:5,mode:"DETECTION_ONLY",field:"ARGS:q",fieldKey:"fieldSearch",contentKey:"contentSqlSearch",whyKey:"whyDetection",rules:[["942100","SQL Injection Attack Detected via libinjection"],["949110","Inbound Anomaly Score Exceeded (Total Score: 5)"]]},
-  {key:"numericHost",file:"phase1-numeric-host-allowed.json",tx:"ar4djKPK1WHVNKMHG_yyEgAAAEQ",method:"GET",path:"/",decision:"logged",status:200,phase:"1",score:3,threshold:5,mode:"ENABLED",field:"REQUEST_HEADERS:Host",fieldKey:"fieldHost",contentKey:"contentNumeric",whyKey:"whyHost",rules:[["920350","Host header is a numeric IP address"]]},
-  {key:"loginFive",file:"phase5-threshold5-login-sqli-blocked.json",tx:"ar4e9BdBzY3fHQgqtF7INwAAAEw",method:"POST",path:"/rest/user/login",decision:"block",status:403,phase:"2",score:5,threshold:5,mode:"ENABLED",field:"ARGS:email",fieldKey:"fieldEmail",contentKey:"contentEmail",whyKey:"whyLoginFive",rules:[["942100","SQL Injection Attack Detected via libinjection"],["949110","Inbound Anomaly Score Exceeded (Total Score: 5)"]]},
-  {key:"loginTen",file:"phase5-threshold10-login-sqli-allowed.json",tx:"ar4fwldKj6OGqet0DMXGgQAAABE",method:"POST",path:"/rest/user/login",decision:"allow",status:201,phase:"2",score:5,threshold:10,mode:"ENABLED",field:"ARGS:email",fieldKey:"fieldEmail",contentKey:"contentEmail",whyKey:"whyLoginTen",rules:[["942100","SQL Injection Attack Detected via libinjection"]]}
+  {key:"fpBefore",fixKey:"fixFp",file:"fp001-before-blocked-932235.json",tx:"ar4e9BdBzY3fHQgqtF7IRQAAAEE",method:"POST",path:"/api/Feedbacks/",decision:"block",status:403,phase:"2",score:5,threshold:5,mode:"ENABLED",field:"ARGS:comment",fieldKey:"fieldComment",contentKey:"contentFp",valueKey:"safeFpValue",whyKey:"whyFp",group:"FP001",rules:[["932235","Remote Command Execution: Unix Command Injection (command without evasion)"],["949110","Inbound Anomaly Score Exceeded (Total Score: 5)"]]},
+  {key:"fpAfter",fixKey:"fixFp",file:"fp001-after-allowed.json",tx:"ar4fEqUUtpghSxT7cH4T_gAAAEA",method:"POST",path:"/api/Feedbacks/",decision:"allow",status:201,phase:"-",score:0,threshold:5,mode:"ENABLED",field:"ARGS:comment",fieldKey:"fieldComment",contentKey:"contentFp",valueKey:"safeFpValue",whyKey:"whyFpAfter",group:"FP001",rules:[]},
+  {key:"fpControl",fixKey:"fixFpControl",file:"fp001-after-ctrl1-cmdi-still-blocked.json",tx:"ar4fEuafFOqhqwGVzvHc1gAAAAQ",method:"POST",path:"/api/Feedbacks/",decision:"block",status:403,phase:"2",score:10,threshold:5,mode:"ENABLED",field:"ARGS:comment",fieldKey:"fieldComment",contentKey:"contentControl",whyKey:"whyControl",rules:[["930120","OS File Access Attempt"],["932160","Remote Command Execution: Unix Shell Code Found"],["949110","Inbound Anomaly Score Exceeded (Total Score: 10)"]]},
+  {key:"basketBeforePut",fixKey:"fixBasket",file:"fp002-before-put-blocked-911100.json",tx:"ar4evr8Z9dXC7xwMdWNDswAAAEA",method:"PUT",path:"/api/BasketItems/1",decision:"block",status:403,phase:"2",score:5,threshold:5,mode:"ENABLED",field:"REQUEST_METHOD",fieldKey:"fieldMethod",contentKey:"contentBasket",valueKey:"safeBasketValue",whyKey:"whyBasket",group:"FP002",rules:[["911100","Method is not allowed by policy"],["949110","Inbound Anomaly Score Exceeded (Total Score: 5)"]]},
+  {key:"basketBeforeDelete",fixKey:"fixBasket",file:"fp002-before-delete-blocked-911100.json",tx:"ar4evr8Z9dXC7xwMdWNDtAAAAEM",method:"DELETE",path:"/api/BasketItems/1",decision:"block",status:403,phase:"2",score:5,threshold:5,mode:"ENABLED",field:"REQUEST_METHOD",fieldKey:"fieldMethod",contentKey:"contentDelete",whyKey:"whyBasket",rules:[["911100","Method is not allowed by policy"],["949110","Inbound Anomaly Score Exceeded (Total Score: 5)"]]},
+  {key:"basketAfterPut",fixKey:"fixBasket",file:"fp002-after-put-allowed.json",tx:"ar4ewpiTzDqDadGSJUJzVwAAAAE",method:"PUT",path:"/api/BasketItems/1",decision:"allow",status:200,phase:"-",score:0,threshold:5,mode:"ENABLED",field:"REQUEST_METHOD",fieldKey:"fieldMethod",contentKey:"contentBasket",valueKey:"safeBasketValue",whyKey:"whyBasketAfter",group:"FP002",rules:[]},
+  {key:"labBeforeCough",fixKey:"fixLab",file:"labf-before-cough-drops-blocked.json",tx:"ar4eV082DEetEvXNLgvIggAAAEA",method:"GET",path:"/rest/products/search",decision:"block",status:403,phase:"2",score:0,threshold:5,mode:"ENABLED",field:"ARGS:q",fieldKey:"fieldSearch",contentKey:"contentCough",valueKey:"safeCoughValue",whyKey:"whyLabBefore",group:"LABF",rules:[["100050","WFR lab F: DROP keyword in an argument"]]},
+  {key:"labAfterCough",fixKey:"fixLab",file:"labf-after-cough-drops-allowed.json",tx:"ar4eZ4q-3QgAuTQ_Zor6SAAAAAE",method:"GET",path:"/rest/products/search",decision:"allow",status:200,phase:"-",score:0,threshold:5,mode:"ENABLED",field:"ARGS:q",fieldKey:"fieldSearch",contentKey:"contentCough",valueKey:"safeCoughValue",whyKey:"whyLabAfter",group:"LABF",rules:[]},
+  {key:"labBeforeControl",fixKey:"fixLabControl",file:"labf-before-drop-table-blocked.json",tx:"ar4eV-XSIiJAFGquetfsfAAAAAM",method:"GET",path:"/rest/products/search",decision:"block",status:403,phase:"2",score:0,threshold:5,mode:"ENABLED",field:"ARGS:q",fieldKey:"fieldSearch",contentKey:"contentDropControl",whyKey:"whyLabControl",rules:[["100050","WFR lab F: DROP keyword in an argument"]]},
+  {key:"labAfterControl",fixKey:"fixLabControl",file:"labf-after-drop-table-blocked.json",tx:"ar4eZ4q-3QgAuTQ_Zor6SQAAAAM",method:"GET",path:"/rest/products/search",decision:"block",status:403,phase:"2",score:0,threshold:5,mode:"ENABLED",field:"ARGS:q",fieldKey:"fieldSearch",contentKey:"contentDropControl",whyKey:"whyLabControl",rules:[["100050","WFR lab F: SQL DROP statement in an argument"]]},
+  {key:"searchBlocked",fixKey:"fixSqli",file:"phase1-crs-sqli-blocked.json",tx:"ar4djKPK1WHVNKMHG_yyEQAAAEI",method:"GET",path:"/rest/products/search",decision:"block",status:403,phase:"2",score:5,threshold:5,mode:"ENABLED",field:"ARGS:q",fieldKey:"fieldSearch",contentKey:"contentSqlSearch",whyKey:"whySqli",rules:[["942100","SQL Injection Attack Detected via libinjection"],["949110","Inbound Anomaly Score Exceeded (Total Score: 5)"]]},
+  {key:"searchWatch",fixKey:"fixDetection",file:"phase1-crs-sqli-detectiononly.json",tx:"ar4d5KxKyxWZTWyTXghEgwAAAAE",method:"GET",path:"/rest/products/search",decision:"logged",status:200,phase:"-",score:5,threshold:5,mode:"DETECTION_ONLY",field:"ARGS:q",fieldKey:"fieldSearch",contentKey:"contentSqlSearch",whyKey:"whyDetection",rules:[["942100","SQL Injection Attack Detected via libinjection"],["949110","Inbound Anomaly Score Exceeded (Total Score: 5)"]]},
+  {key:"numericHost",fixKey:"fixHost",file:"phase1-numeric-host-allowed.json",tx:"ar4djKPK1WHVNKMHG_yyEgAAAEQ",method:"GET",path:"/",decision:"logged",status:200,phase:"-",score:3,threshold:5,mode:"ENABLED",field:"REQUEST_HEADERS:Host",fieldKey:"fieldHost",contentKey:"contentNumeric",whyKey:"whyHost",rules:[["920350","Host header is a numeric IP address"]]},
+  {key:"loginFive",fixKey:"fixLoginFive",file:"phase5-threshold5-login-sqli-blocked.json",tx:"ar4e9BdBzY3fHQgqtF7INwAAAEw",method:"POST",path:"/rest/user/login",decision:"block",status:403,phase:"2",score:5,threshold:5,mode:"ENABLED",field:"ARGS:email",fieldKey:"fieldEmail",contentKey:"contentEmail",whyKey:"whyLoginFive",rules:[["942100","SQL Injection Attack Detected via libinjection"],["949110","Inbound Anomaly Score Exceeded (Total Score: 5)"]]},
+  {key:"loginTen",fixKey:"fixLoginTen",file:"phase5-threshold10-login-sqli-allowed.json",tx:"ar4fwldKj6OGqet0DMXGgQAAABE",method:"POST",path:"/rest/user/login",decision:"logged",status:201,phase:"-",score:5,threshold:10,mode:"ENABLED",field:"ARGS:email",fieldKey:"fieldEmail",contentKey:"contentEmail",whyKey:"whyLoginTen",rules:[["942100","SQL Injection Attack Detected via libinjection"]]}
 ];
 
 const wfrQuestions=["q1","q2","q3","q4","q5"];
@@ -1677,7 +1694,7 @@ function wfrRenderInspector(){
   answer4.append(trace);
   root.append(answer4);
   const answer5=wfrEl("section","answer");
-  answer5.append(wfrEl("h4","",wfrText("inspectorQuestion5")),wfrEl("p","",wfrText(record.whyKey)));
+  answer5.append(wfrEl("h4","",wfrText("inspectorQuestion5")),wfrEl("p","",wfrText(record.fixKey)));
   if(record.group){
     const compare=wfrEl("div","compare");
     compare.append(wfrEl("span","micro-label",wfrText("compareLabel")));
@@ -1690,8 +1707,6 @@ function wfrRenderInspector(){
       compare.append(btn);
     });
     answer5.append(compare);
-  }else{
-    answer5.append(wfrEl("p","no-fix",wfrText("notTuned")));
   }
   const link=wfrEl("a","sample-source",wfrText("sourceSample"));
   link.href="https://github.com/albeen-sknight/waf-flight-recorder/blob/main/evidence/sanitized-samples/"+record.file;
