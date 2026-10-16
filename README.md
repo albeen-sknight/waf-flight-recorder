@@ -1,3 +1,4 @@
+**English** · [Español](README.es.md)
 # WAF Flight Recorder
 
 [![WAF lab](https://github.com/albeen-sknight/waf-flight-recorder/actions/workflows/lab.yml/badge.svg)](https://github.com/albeen-sknight/waf-flight-recorder/actions/workflows/lab.yml)
